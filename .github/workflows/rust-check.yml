@@ -1,0 +1,60 @@
+name: Rust Core Check
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'stremio-core/**'
+      - '.github/workflows/rust-check.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'stremio-core/**'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            stremio-core/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+      
+      - name: Check formatting
+        working-directory: stremio-core
+        run: cargo fmt --all -- --check
+        continue-on-error: true
+      
+      - name: Run cargo check
+        working-directory: stremio-core
+        run: cargo check --all-features
+      
+      - name: Run clippy
+        working-directory: stremio-core
+        run: cargo clippy --all-features -- -D warnings
+        continue-on-error: true
+      
+      - name: Run tests
+        working-directory: stremio-core
+        run: cargo test --all-features

@@ -1,0 +1,62 @@
+name: Build Android App
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        flavor: [tv, firestick, mobile]
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Cache build environments
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.gradle/native
+            ~/.gradle/daemon
+            ~/.gradle/buildOutputCleanup
+            ~/.android
+            ~/.m2
+            .gradle
+            app/build
+          key: ${{ runner.os }}-android-${{ matrix.flavor }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-android-${{ matrix.flavor }}-
+            ${{ runner.os }}-android-
+
+      - name: Fix Gradle wrapper
+        run: |
+          sudo apt-get update && sudo apt-get install -y dos2unix
+          dos2unix gradlew
+          chmod +x gradlew
+          test -f gradle/wrapper/gradle-wrapper.jar || { echo "gradle-wrapper.jar missing"; exit 1; }
+
+      - name: Build ${{ matrix.flavor }} Debug APK
+        env:
+          GRADLE_OPTS: "-Xmx4096m -Dfile.encoding=UTF-8"
+          GRADLE_USER_HOME: $PWD/.gradle
+        run: |
+          FLAVOR="${{ matrix.flavor }}"
+          CAPITALIZED="$(echo ${FLAVOR:0:1} | tr '[:lower:]' '[:upper:]')${FLAVOR:1}"
+          ./gradlew assemble${CAPITALIZED}Debug --no-daemon --stacktrace
+
+      - name: Upload ${{ matrix.flavor }} APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: stremio-${{ matrix.flavor }}-debug-apk
+          path: app/build/outputs/apk/${{ matrix.flavor }}/debug/*.apk
