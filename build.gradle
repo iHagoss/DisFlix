@@ -11,7 +11,11 @@ buildscript {
     }
 }
 
-// The allprojects block was removed to resolve the repository conflict.
+allprojects {
+    repositories {
+        maven { url 'https://jitpack.io' }
+    }
+}
 
 task clean(type: Delete) {
     delete rootProject.buildDir
