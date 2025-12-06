@@ -1,19 +1,27 @@
 pluginManagement {
     repositories {
+        gradlePluginPortal()
         google()
         mavenCentral()
-        gradlePluginPortal()
+        // Included for consistency and in case any plugins are hosted here
+        maven { url 'https://jitpack.io' } 
     }
 }
 
 dependencyResolutionManagement {
+    // This setting resolves the "Build was configured to prefer settings repositories..." warnings
     repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
     repositories {
         google()
         mavenCentral()
+        // JitPack is commonly used by Stremio's third-party dependencies (like vlc-android-sdk)
         maven { url 'https://jitpack.io' }
     }
 }
 
 rootProject.name = "Stremio"
 include ':app'
+// If you are including other internal Stremio modules (like the core), 
+// you would add them here:
+// include ':stremio-core'
+// include ':stremio-video'
