@@ -1,0 +1,19 @@
+name: Clear Gradle Cache
+
+on:
+  workflow_dispatch:
+
+jobs:
+  clear-cache:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Clear Gradle Cache directories
+        run: |
+          echo "Removing Gradle caches..."
+          rm -rf ~/.gradle/caches/
+          rm -rf ~/.gradle/wrapper/
+          echo "Gradle caches cleared."
