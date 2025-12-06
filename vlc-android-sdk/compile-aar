@@ -1,0 +1,66 @@
+#!/bin/bash
+set -e
+
+if [[ -z "$VLC_ANDROID_VERSION" ]]
+then
+    echo "Invalid vlc android version"
+    exit 1
+fi
+
+if [[ ! "$VERSION" =~ ^[0-9\.]+$ ]]
+then
+    echo "Skip building for vlc-android-sdk: $VERSION"
+    exit 1
+fi
+
+PROJECT_DIR=`pwd`
+ANDROID_NDK="$PROJECT_DIR"/ndk
+rm -rf "$ANDROID_NDK"
+mkdir -p "$ANDROID_NDK"
+cd "$ANDROID_NDK"
+ANDROID_NDK_VERSION=r21
+ANDROID_NDK_SHA256=b65ea2d5c5b68fb603626adcbcea6e4d12c68eb8a73e373bbb9d23c252fc647b
+echo "Download android ndk" && wget -q https://dl.google.com/android/repository/android-ndk-"$ANDROID_NDK_VERSION"-linux-x86_64.zip
+echo "$ANDROID_NDK_SHA256" android-ndk-"$ANDROID_NDK_VERSION"-linux-x86_64.zip | sha256sum -c
+echo "Extract android ndk" && unzip -q android-ndk-"$ANDROID_NDK_VERSION"-linux-x86_64.zip
+rm -f android-ndk-"$ANDROID_NDK_VERSION"-linux-x86_64.zip
+mv android-ndk-"$ANDROID_NDK_VERSION"/** .
+rm -rf android-ndk-"$ANDROID_NDK_VERSION"
+cd "$PROJECT_DIR"
+echo "ndk.dir=$ANDROID_NDK" > local.properties
+echo "sdk.dir=$ANDROID_SDK" >> local.properties
+echo "android.enableJetifier=false" >> gradle.properties
+echo "android.useAndroidX=true" >> gradle.properties
+GRADLE_VERSION=7.0.2
+GRADLE_SHA256=0e46229820205440b48a5501122002842b82886e76af35f0f3a069243dca4b3c
+echo "Download gradle" && wget -q https://download.videolan.org/pub/contrib/gradle/gradle-"$GRADLE_VERSION"-bin.zip
+echo "$GRADLE_SHA256" gradle-"$GRADLE_VERSION"-bin.zip | sha256sum -c
+echo "Extract gradle" && unzip -q gradle-"$GRADLE_VERSION"-bin.zip
+rm -f gradle-"$GRADLE_VERSION"-bin.zip
+./gradle-"$GRADLE_VERSION"/bin/gradle wrapper
+chmod a+x gradlew
+SRC_MAIN_DIR="src/main"
+JNILIBS_DIR="$SRC_MAIN_DIR"/jniLibs
+JAVA_DIR="$SRC_MAIN_DIR"/java
+RES_DIR="$SRC_MAIN_DIR"/res
+mkdir -p "$SRC_MAIN_DIR"
+mkdir -p "$JNILIBS_DIR"
+mkdir -p "$JAVA_DIR"
+mkdir -p "$RES_DIR"
+for ARCHITECTURE in armeabi-v7a arm64-v8a x86_64 x86
+do
+    wget https://github.com/Stremio/vlc-android-sdk/releases/download/"$VERSION"-"$ARCHITECTURE"/libvlc-"$ARCHITECTURE"-jni.zip
+    unzip -q libvlc-"$ARCHITECTURE"-jni.zip
+    rm -f libvlc-"$ARCHITECTURE"-jni.zip
+    cp -r libvlc-jni/* "$JNILIBS_DIR"
+    rm -rf libvlc-jni
+done
+git clone "https://github.com/Stremio/vlc-android.git" -b "$VLC_ANDROID_VERSION" vlc-android
+cp vlc-android/libvlc/AndroidManifest.xml "$SRC_MAIN_DIR"
+cp -r vlc-android/libvlc/src/ "$JAVA_DIR"
+mv "$JAVA_DIR"/src/* "$JAVA_DIR"
+rm -rf "$JAVA_DIR"/src
+cp -r vlc-android/libvlc/res/ "$RES_DIR"
+mv "$RES_DIR"/res/* "$RES_DIR"
+rm -rf "$RES_DIR"/res
+rm -rf vlc-android

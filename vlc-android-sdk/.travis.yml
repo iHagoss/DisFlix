@@ -1,0 +1,29 @@
+sudo: required
+
+services:
+  - docker
+
+env:
+  global:
+  - VLC_ANDROID_VERSION="3.4.3-stremio-cast-app-id"
+  - ARCHITECTURE=`echo "$TRAVIS_TAG" | sed -rn 's/^[^-]*-(.*)$/\1/p'`
+  - DOCKER_CONTAINER_NAME="stremio/vlc-android-sdk"
+
+script:
+  - if [ -z "$TRAVIS_TAG" -o -z "$ARCHITECTURE" ]; then exit 0; fi
+  - while sleep 1m; do echo "[$SECONDS seconds] building libvlc for $ARCHITECTURE based on vlc-android $VLC_ANDROID_VERSION"; done &
+  - docker build -t "$DOCKER_CONTAINER_NAME" . >/dev/null 2>/dev/null
+  - docker run -it "$DOCKER_CONTAINER_NAME" "$VLC_ANDROID_VERSION" "$ARCHITECTURE" >/dev/null 2>/dev/null
+  - kill %1
+  - DOCKER_CONTAINER_ID=`docker ps -a | grep "$DOCKER_CONTAINER_NAME" | awk 'NR==1{ print $1 }'`
+  - docker cp "$DOCKER_CONTAINER_ID:/home/stremioci/libvlc-$ARCHITECTURE-jni.zip" .
+
+deploy:
+  provider: releases
+  skip_cleanup: true
+  api_key:
+    secure: b8kEO5JyYh4XHbrBisij8qEgKawO6PTmXkSdFF4++eZGz3xo6dFzdRqPM4esz5icWHZ6Yw4QWrhdKMzIVCHXzBhNW323VBaXGqgoNaambK5gc7WsGyZZ8QqfLoj9jzOGbw3XA2Hdy097jGeb8nlq/Oo9W86kJwV87kRZvitVCy0mg1HafEd9yfzme7x7zYLBYKZg7brpDwIm3hwKcNkpQ0UhgwZcNvrtz4Piu72oB4Hx1MeeVAfcoM8E4WKDv8OIAXGkwlPnlcD7hoBymaCThNqPe3CVj+eY17+8zKfTtMBjLTrKheI6i+v0h6oeGzVCRyRBL/RCze/UH4BzPoXmZkbkDfvkQ9jCwvf/qIMzHQ5KjlzZvpcFVzxWG/F0Bm/blXeGjMpZFzcBXYRIbFynAjCCb2mY1ugdFmOptXFCyTRS3ZCGAXuVrC0cQpR52PkaDTe9lOqzAbRWO16sfU/6i43CBJWFAJdeL8KL/0MtF+PTgiFBzg17azWn5eoWymoU4JM7hMwqSjSIlXorf/sWJoIe4MsXOUcsijAt16bmV1A0QbupsY0E3Vt4fKLu2fxE7G3naoQnP28UiDrr2bK/uO/ydvqOLZElf1BAyyswkaM9j9ykb1fRQr0UAuii9A13CVAJjSbnXPIib3mbAFCTVAOgY6STbM2gVjNksFmGogw=
+  file: "libvlc-$ARCHITECTURE-jni.zip"
+  on:
+    tags: true
+    repo: Stremio/vlc-android-sdk
