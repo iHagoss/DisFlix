@@ -25,7 +25,6 @@
         android:networkSecurityConfig="@xml/network_security_config"
         tools:targetApi="34">
 
-        <!-- MOBILE LAUNCHER (Hidden on TV flavors) -->
         <activity
             android:name=".ui.screens.SplashActivity"
             android:exported="true"
@@ -43,8 +42,11 @@
             </intent-filter>
         </activity>
 
-        <!-- MOBILE ACTIVITIES -->
-        <activity android:name=".MainActivity" android:exported="false" android:launchMode="singleTask" android:configChanges="orientation|screenSize|keyboard|keyboardHidden" />
+        <activity android:name=".MainActivity" 
+            android:exported="false" 
+            android:launchMode="singleTask" 
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden" />
+
         <activity android:name=".ui.screens.LoginActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".ui.screens.DiscoverActivity" android:exported="false" android:launchMode="singleTop" />
         <activity android:name=".ui.screens.DetailActivity" android:exported="false" android:parentActivityName=".ui.screens.DiscoverActivity" />
@@ -55,9 +57,10 @@
         <activity android:name=".ui.screens.StreamSelectActivity" android:exported="false" />
         <activity android:name=".PlayerActivity" android:exported="false" android:configChanges="orientation|screenSize|keyboard|keyboardHidden" android:screenOrientation="sensorLandscape" android:launchMode="singleTask" android:theme="@style/Theme.Stremio.Player" />
 
-        <!-- TV/FIRESTICK LAUNCHER -->
+        <activity android:name=".MobileMainActivity" android:exported="false" />
+        
         <activity
-            android:name=".tv.TvMainActivity"
+            android:name=".TvMainActivity"
             android:exported="true"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.Stremio.Leanback">
@@ -67,12 +70,11 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".tv.TvDetailActivity" android:exported="false" android:screenOrientation="landscape" android:theme="@style/Theme.Stremio.Leanback" />
-        <activity android:name=".tv.TvSearchActivity" android:exported="false" android:screenOrientation="landscape" android:theme="@style/Theme.Stremio.Leanback" />
-        <activity android:name=".tv.TvPlayerActivity" android:exported="false" android:screenOrientation="landscape" android:theme="@style/Theme.Stremio.Leanback" />
+        <activity android:name=".TvDetailActivity" android:exported="false" android:screenOrientation="landscape" android:theme="@style/Theme.Stremio.Leanback" />
+        <activity android:name=".TvSearchActivity" android:exported="false" android:screenOrientation="landscape" android:theme="@style/Theme.Stremio.Leanback" />
+        <activity android:name=".TvPlayerActivity" android:exported="false" android:screenOrientation="landscape" android:theme="@style/Theme.Stremio.Leanback" />
 
-        <!-- SERVICE -->
-        <service android:name=".ServerService" />
+        <service android:name=".ServerService" android:exported="false" />
 
     </application>
 </manifest>
