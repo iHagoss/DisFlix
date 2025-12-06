@@ -57,7 +57,7 @@ jobs:
           ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload Universal APK artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: stremio-universal-debug-apk
           path: app/build/outputs/apk/debug/*.apk
