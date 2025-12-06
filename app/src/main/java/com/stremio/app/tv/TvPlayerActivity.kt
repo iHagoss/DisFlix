@@ -1,4 +1,4 @@
-package com.stremio.app.tv
+package com.stremio.app
 
 import android.net.Uri
 import android.os.Bundle
@@ -14,9 +14,6 @@ import android.widget.ProgressBar
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.fragment.app.FragmentActivity
-import com.stremio.app.R
-import com.stremio.app.SkipIntroHandler
-import com.stremio.app.StremioCore
 import org.videolan.libvlc.LibVLC
 import org.videolan.libvlc.Media
 import org.videolan.libvlc.MediaPlayer
@@ -63,11 +60,7 @@ class TvPlayerActivity : FragmentActivity(), SurfaceHolder.Callback {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tv_player)
         
-        try {
-            StremioCore.initCore(this)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+        // StremioCore init is handled by MainActivity Router
         
         initViews()
         initVLC()
@@ -360,6 +353,6 @@ class TvPlayerActivity : FragmentActivity(), SurfaceHolder.Callback {
         mediaPlayer = null
         libVLC = null
         
-        StremioCore.shutdown()
+        // StremioCore shutdown is handled by MainActivity Router
     }
 }
