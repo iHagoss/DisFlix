@@ -2,7 +2,6 @@ package com.stremio.app
 
 import android.content.Context
 import android.util.Log
-import android.webkit.WebView
 import org.json.JSONObject
 
 data class IntroData(
@@ -116,32 +115,6 @@ class SkipIntroHandler(private val context: Context) {
     fun shouldShowSkipButton(currentTimeMs: Long): Boolean {
         val intro = currentIntroData ?: return false
         return currentTimeMs >= intro.from && currentTimeMs < intro.to
-    }
-    
-    fun handleSkipIntro(introData: IntroData?, webView: WebView?) {
-        val intro = introData ?: currentIntroData ?: return
-        
-        webView?.let { view ->
-            val seekTime = intro.to
-            val js = """
-                (function() {
-                    if (window.stremio && window.stremio.player) {
-                        window.stremio.player.seek($seekTime);
-                    } else if (window.dispatchStremioEvent) {
-                        window.dispatchStremioEvent('Player.SkipIntro', { time: $seekTime });
-                    } else {
-                        var video = document.querySelector('video');
-                        if (video) {
-                            video.currentTime = $seekTime / 1000;
-                        }
-                    }
-                })();
-            """.trimIndent()
-            view.evaluateJavascript(js, null)
-        }
-        
-        StremioCore.dispatchSkipIntro()
-        isIntroActive = false
     }
     
     fun getSkipToTime(): Long? {
