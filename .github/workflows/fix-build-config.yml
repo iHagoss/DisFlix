@@ -1,0 +1,53 @@
+name: Fix Build Configuration
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  fix-config:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Fix app/build.gradle
+      run: |
+        # Update compileSdk to 35
+        sed -i 's/compileSdk[[:space:]]*34/compileSdk 35/g' app/build.gradle
+        sed -i 's/compileSdkVersion[[:space:]]*34/compileSdkVersion 35/g' app/build.gradle
+        
+        # Add resolution strategy after android block
+        awk '/^android \{/,/^\}/ {print; if (/^\}/) {
+          print ""
+          print "configurations.all {"
+          print "    resolutionStrategy {"
+          print "        force '\''androidx.appcompat:appcompat:1.6.1'\''"
+          print "        force '\''com.google.android.material:material:1.11.0'\''"
+          print "        force '\''androidx.constraintlayout:constraintlayout:2.1.4'\''"
+          print "        force '\''androidx.coordinatorlayout:coordinatorlayout:1.2.0'\''"
+          print "        force '\''androidx.core:core:1.13.1'\''"
+          print "        force '\''androidx.leanback:leanback:1.1.0-rc02'\''"
+          print "    }"
+          print "}"
+        } next} {print}' app/build.gradle > app/build.gradle.tmp && mv app/build.gradle.tmp app/build.gradle
+        
+        echo "Updated app/build.gradle"
+        
+    - name: Update root build.gradle AGP version
+      run: |
+        # Update Android Gradle Plugin to 8.3.0
+        sed -i "s/classpath[[:space:]]*['\"]com.android.tools.build:gradle:[^'\"]*['\"]/classpath 'com.android.tools.build:gradle:8.3.0'/g" build.gradle
+        
+        echo "Updated root build.gradle"
+    
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v6
+      with:
+        commit-message: 'Fix: Update compileSdk to 35 and resolve duplicate resources'
+        title: 'Fix Build Configuration - Update to SDK 35'
+        body: |
+          ## Build Fixes Applied
