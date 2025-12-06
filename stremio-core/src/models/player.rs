@@ -722,19 +722,6 @@ impl<E: Env + 'static> UpdateWithCtx<E> for Player {
                     _ => Effects::none().unchanged(),
                 }
             }
-            Msg::Action(Action::Player(ActionPlayer::SkipIntro)) => {
-                match (&self.intro_outro, &self.library_item) {
-                    (Some(IntroOutro { intro: Some(intro_data), .. }), Some(library_item)) => {
-                        let seek_msg = Msg::Action(Action::Player(ActionPlayer::Seek {
-                            time: intro_data.to,
-                            duration: library_item.state.duration,
-                            device: "android".to_string(),
-                        }));
-                        Effects::msg(seek_msg).unchanged()
-                    }
-                    _ => Effects::none().unchanged(),
-                }
-            }
             Msg::Internal(Internal::LibraryChanged(_)) => {
                 let library_item_effects = library_item_update::<E>(
                     &mut self.library_item,

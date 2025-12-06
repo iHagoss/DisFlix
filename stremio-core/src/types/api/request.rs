@@ -89,9 +89,6 @@ pub enum APIRequest {
     /// Retrieve Skip gaps for Intro and Outro in movie series from the API
     #[serde(rename_all = "camelCase")]
     SkipGaps(SkipGapsRequest),
-    /// Retrieve Skip intro data for episodes from the API
-    #[serde(rename_all = "camelCase")]
-    SkipIntro(SkipIntroRequest),
     #[serde(rename_all = "camelCase")]
     GetModal {
         date: DateTime<Local>,
@@ -149,24 +146,6 @@ pub struct SkipGapsRequest {
     pub stream_name_hash: String,
 }
 
-#[derive(Clone, PartialEq, Eq, Serialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct SkipIntroRequest {
-    /// User's Auth Key, this requests requires premium account.
-    pub auth_key: AuthKey,
-    /// Opensubtitles hash returned by the server
-    #[serde(rename = "osId")]
-    pub os_hash: String,
-    pub item_id: String,
-    #[serde(flatten)]
-    pub series_info: SeriesInfo,
-    /// Stream name hash
-    ///
-    /// base64 encoded SHA-256 hash of the Stream file name.
-    #[serde(rename = "stHash")]
-    pub stream_name_hash: String,
-}
-
 impl FetchRequestParams<APIRequest> for APIRequest {
     fn endpoint(&self) -> Url {
         API_URL.to_owned()
@@ -191,7 +170,6 @@ impl FetchRequestParams<APIRequest> for APIRequest {
             APIRequest::Events { .. } => "events".to_owned(),
             APIRequest::SeekLog { .. } => "seekLog".to_owned(),
             APIRequest::SkipGaps { .. } => "getSkipGaps".to_owned(),
-            APIRequest::SkipIntro { .. } => "getSkipIntro".to_owned(),
             APIRequest::GetModal { .. } => "getModal".to_owned(),
             APIRequest::GetNotification { .. } => "getNotification".to_owned(),
         }

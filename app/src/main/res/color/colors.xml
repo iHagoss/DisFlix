@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary_light5">#A682C0</color>
+    <color name="primary_light4">#9A71B7</color>
+    <color name="primary_light3">#8E60AF</color>
+    <color name="primary_light2">#8152A3</color>
+    <color name="primary_light1">#744992</color>
+    <color name="primary">#664181</color>
+    <color name="primary_dark1">#593870</color>
+    <color name="primary_dark2">#4B305F</color>
+    <color name="primary_dark3">#3E274E</color>
+    <color name="primary_dark4">#301F3D</color>
+    <color name="primary_dark5">#23162C</color>
+
+    <color name="primaryvariant1_light5">#E1CEEE</color>
+    <color name="primaryvariant1_light4">#D6BBE7</color>
+    <color name="primaryvariant1_light3">#CBA8E1</color>
+    <color name="primaryvariant1_light2">#BF95DA</color>
+    <color name="primaryvariant1_light1">#B482D3</color>
+    <color name="primaryvariant1">#A970CD</color>
+    <color name="primaryvariant1_dark1">#9D5DC6</color>
+    <color name="primaryvariant1_dark2">#924ABF</color>
+    <color name="primaryvariant1_dark3">#853EB1</color>
+    <color name="primaryvariant1_dark4">#77389F</color>
+    <color name="primaryvariant1_dark5">#69318C</color>
+
+    <color name="secondary_light5">#7A8AC2</color>
+    <color name="secondary_light4">#687ABA</color>
+    <color name="secondary_light3">#576BB2</color>
+    <color name="secondary_light2">#4B5FA4</color>
+    <color name="secondary_light1">#435593</color>
+    <color name="secondary">#3B4B81</color>
+    <color name="secondary_dark1">#334170</color>
+    <color name="secondary_dark2">#2B365E</color>
+    <color name="secondary_dark3">#232C4D</color>
+    <color name="secondary_dark4">#1B223B</color>
+    <color name="secondary_dark5">#13182A</color>
+
+    <color name="secondaryvariant1_light5">#DEE3F2</color>
+    <color name="secondaryvariant1_light4">#CCD4EA</color>
+    <color name="secondaryvariant1_light3">#BAC5E3</color>
+    <color name="secondaryvariant1_light2">#A8B6DC</color>
+    <color name="secondaryvariant1_light1">#96A6D4</color>
+    <color name="secondaryvariant1">#8497CD</color>
+    <color name="secondaryvariant1_dark1">#7288C5</color>
+    <color name="secondaryvariant1_dark2">#6078BE</color>
+    <color name="secondaryvariant1_dark3">#4D69B7</color>
+    <color name="secondaryvariant1_dark4">#445EA7</color>
+    <color name="secondaryvariant1_dark5">#3D5495</color>
+
+    <color name="secondaryvariant2_light5">#F5F8FF</color>
+    <color name="secondaryvariant2_light4">#DBE6FF</color>
+    <color name="secondaryvariant2_light3">#C2D3FF</color>
+    <color name="secondaryvariant2_light2">#A8C1FF</color>
+    <color name="secondaryvariant2_light1">#8FAFFF</color>
+    <color name="secondaryvariant2">#759DFF</color>
+    <color name="secondaryvariant2_dark1">#5C8BFF</color>
+    <color name="secondaryvariant2_dark2">#4278FF</color>
+    <color name="secondaryvariant2_dark3">#2966FF</color>
+    <color name="secondaryvariant2_dark4">#0F54FF</color>
+    <color name="secondaryvariant2_dark5">#0046F5</color>
+
+    <color name="background_light5">#5C5992</color>
+    <color name="background_light4">#524F82</color>
+    <color name="background_light3">#484572</color>
+    <color name="background_light2">#3E3C62</color>
+    <color name="background_light1">#343252</color>
+    <color name="background">#2A2843</color>
+    <color name="background_dark1">#201F33</color>
+    <color name="background_dark2">#161523</color>
+    <color name="background_dark3">#0C0C13</color>
+    <color name="background_dark4">#020203</color>
+    <color name="background_dark5">#000000</color>
+
+    <color name="surface_light5">#FFFFFF</color>
+    <color name="surface_light4">#F2F2F2</color>
+    <color name="surface_light3">#E6E6E6</color>
+    <color name="surface_light2">#D9D9D9</color>
+    <color name="surface_light1">#CCCCCC</color>
+    <color name="surface">#BFBFBF</color>
+    <color name="surface_dark1">#B3B3B3</color>
+    <color name="surface_dark2">#A6A6A6</color>
+    <color name="surface_dark3">#999999</color>
+    <color name="surface_dark4">#8C8C8C</color>
+    <color name="surface_dark5">#808080</color>
+
+    <color name="accent1_light5">#FFF0F0</color>
+    <color name="accent1_light4">#FFD6D6</color>
+    <color name="accent1_light3">#FFBDBD</color>
+    <color name="accent1_light2">#FFA3A3</color>
+    <color name="accent1_light1">#FF8A8A</color>
+    <color name="accent1">#FF7070</color>
+    <color name="accent1_dark1">#FF5757</color>
+    <color name="accent1_dark2">#FF3D3D</color>
+    <color name="accent1_dark3">#FF2424</color>
+    <color name="accent1_dark4">#FF0A0A</color>
+    <color name="accent1_dark5">#F00000</color>
+
+    <color name="accent2_light5">#F4B4A6</color>
+    <color name="accent2_light4">#F1A190</color>
+    <color name="accent2_light3">#EE8E79</color>
+    <color name="accent2_light2">#EC7B62</color>
+    <color name="accent2_light1">#E9684C</color>
+    <color name="accent2">#E65535</color>
+    <color name="accent2_dark1">#E3421E</color>
+    <color name="accent2_dark2">#CF3A1A</color>
+    <color name="accent2_dark3">#B83417</color>
+    <color name="accent2_dark4">#A12D14</color>
+    <color name="accent2_dark5">#8A2711</color>
+
+    <color name="accent3_light5">#70E4A6</color>
+    <color name="accent3_light4">#5BE098</color>
+    <color name="accent3_light3">#46DC8B</color>
+    <color name="accent3_light2">#30D87D</color>
+    <color name="accent3_light1">#26C871</color>
+    <color name="accent3">#22B365</color>
+    <color name="accent3_dark1">#1E9D59</color>
+    <color name="accent3_dark2">#1A884D</color>
+    <color name="accent3_dark3">#167241</color>
+    <color name="accent3_dark4">#125D34</color>
+    <color name="accent3_dark5">#0E4828</color>
+
+    <color name="accent4_light5">#7CF2CB</color>
+    <color name="accent4_light4">#65EFC1</color>
+    <color name="accent4_light3">#4EEDB8</color>
+    <color name="accent4_light2">#37EBAF</color>
+    <color name="accent4_light1">#20E8A5</color>
+    <color name="accent4">#16D998</color>
+    <color name="accent4_dark1">#14C188</color>
+    <color name="accent4_dark2">#11AA77</color>
+    <color name="accent4_dark3">#0F9367</color>
+    <color name="accent4_dark4">#0D7C57</color>
+    <color name="accent4_dark5">#0A6547</color>
+
+    <color name="accent5_light5">#FFE098</color>
+    <color name="accent5_light4">#FFD97F</color>
+    <color name="accent5_light3">#FFD165</color>
+    <color name="accent5_light2">#FFC94C</color>
+    <color name="accent5_light1">#FFC232</color>
+    <color name="accent5">#FFBA19</color>
+    <color name="accent5_dark1">#FEB200</color>
+    <color name="accent5_dark2">#E5A000</color>
+    <color name="accent5_dark3">#CB8E00</color>
+    <color name="accent5_dark4">#B27D00</color>
+    <color name="accent5_dark5">#986B00</color>
+</resources>

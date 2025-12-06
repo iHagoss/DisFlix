@@ -229,8 +229,6 @@ pub enum ActionPlayer {
     MarkVideoAsWatched(Video, bool),
     /// Mark all videos from given season as watched
     MarkSeasonAsWatched(u32, bool),
-    /// Skip intro button pressed - seek to end of intro
-    SkipIntro,
 }
 
 #[derive(Clone, Deserialize, Debug)]

@@ -187,22 +187,6 @@ pub struct SeekEvent {
     pub to: u64,
 }
 
-#[serde_as]
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct SkipIntroResponse {
-    pub accuracy: String,
-    #[serde_as(as = "HashMap<DisplayFromStr, _>")]
-    pub intros: HashMap<u64, SkipIntro>,
-}
-
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct SkipIntro {
-    pub from: u64,
-    pub to: u64,
-}
-
 #[cfg(test)]
 mod test {
     use serde_json::json;
