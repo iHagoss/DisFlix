@@ -1,20 +1,47 @@
-name: Build Android App
+# ====================================================================================
+# WORKFLOW NAME
+# This is the name displayed on the GitHub Actions page.
+# ====================================================================================
+Name: Build Android App
 
+# ====================================================================================
+# TRIGGER
+# This workflow is manually triggered by clicking "Run workflow" on GitHub.
+# ====================================================================================
 on:
   workflow_dispatch:
 
+# ====================================================================================
+# JOBS
+# Defines the main tasks to run.
+# ====================================================================================
 jobs:
   build:
+    # Runs the job on the latest Ubuntu runner environment.
     runs-on: ubuntu-latest
     strategy:
+      # Creates three parallel builds for different flavors (TV, Firestick, Mobile).
       matrix:
         flavor: [tv, firestick, mobile]
 
     steps:
       - name: Checkout source
+        # Checks out your repository code.
         uses: actions/checkout@v4
 
+      # --- CRITICAL FIX 1: Set up the required NDK version ---
+      - name: Setup Android NDK 27.2.12479018 (r27c)
+        # This action installs the specific NDK version required by the 'stremio-core-kotlin' library.
+        # This is VITAL for compiling the native Rust code without linking errors.
+        uses: nttld/setup-ndk@v1
+        with:
+          # The exact version string required by the build.gradle configuration (r27c).
+          ndk-version: 27.2.12479018
+          # Links the NDK to the SDK location, making it available to Gradle.
+          link-to-sdk: true
+
       - name: Set up JDK 17
+        # Installs the correct Java Development Kit version required for modern Android development.
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -22,6 +49,7 @@ jobs:
           cache: gradle
 
       - name: Cache build environments
+        # Caches files like dependencies and build outputs to speed up subsequent builds.
         uses: actions/cache@v4
         with:
           path: |
@@ -34,28 +62,41 @@ jobs:
             ~/.m2
             .gradle
             app/build
+          # Unique key based on OS, flavor, and build files.
           key: ${{ runner.os }}-android-${{ matrix.flavor }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-android-${{ matrix.flavor }}-
             ${{ runner.os }}-android-
 
       - name: Fix Gradle wrapper
+        # Ensures the gradlew script is executable and correctly formatted for Linux environments.
         run: |
+          # Install utility to convert Windows line endings (CRLF) to Linux (LF).
           sudo apt-get update && sudo apt-get install -y dos2unix
+          # Convert gradlew file format.
           dos2unix gradlew
+          # Set the executable permission.
           chmod +x gradlew
+          # Check for a critical file's existence.
           test -f gradle/wrapper/gradle-wrapper.jar || { echo "gradle-wrapper.jar missing"; exit 1; }
 
       - name: Build ${{ matrix.flavor }} Debug APK
+        # Runs the Gradle command to build the specific APK flavor.
         env:
+          # Set memory limits and file encoding for the Gradle daemon.
           GRADLE_OPTS: "-Xmx2048m -Dfile.encoding=UTF-8"
+          # Set the Gradle user home directory for caching.
           GRADLE_USER_HOME: $PWD/.gradle
         run: |
+          # Variable assignment for the flavor (e.g., "tv").
           FLAVOR="${{ matrix.flavor }}"
+          # Capitalizes the first letter of the flavor (e.g., "Tv").
           CAPITALIZED="$(echo ${FLAVOR:0:1} | tr '[:lower:]' '[:upper:]')${FLAVOR:1}"
+          # Executes the Gradle task to build the APK.
           ./gradlew assemble${CAPITALIZED}Debug --no-daemon --stacktrace
 
       - name: Upload ${{ matrix.flavor }} APK artifact
+        # Saves the resulting APK files as a workflow artifact for easy download.
         uses: actions/upload-artifact@v4
         with:
           name: stremio-${{ matrix.flavor }}-debug-apk
