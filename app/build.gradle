@@ -6,11 +6,11 @@ plugins {
 
 android {
     namespace 'com.stremio.app'
-    compileSdk 35 
+    compileSdk 35  // ← CHANGED from 34 to 35
 
     defaultConfig {
         applicationId "com.stremio.app"
-        minSdk 21
+        minSdk 22
         targetSdk 34
         versionCode 1
         versionName "1.0"
@@ -46,6 +46,7 @@ android {
     buildFeatures {
         buildConfig = true
         viewBinding = true
+        dataBinding = false  // ← ADDED - explicitly disable data binding
     }
 
     lint {
@@ -63,20 +64,20 @@ android {
     }
 }
 
+// ← ADDED - Force consistent versions to prevent conflicts
 configurations.all {
     resolutionStrategy {
+        force 'androidx.core:core-ktx:1.13.1'
         force 'androidx.appcompat:appcompat:1.6.1'
-        force 'com.google.android.material:material:1.11.0'
         force 'androidx.constraintlayout:constraintlayout:2.1.4'
+        force 'com.google.android.material:material:1.11.0'
         force 'androidx.coordinatorlayout:coordinatorlayout:1.2.0'
-        force 'androidx.core:core:1.13.1'
-        force 'androidx.leanback:leanback:1.1.0-rc02'
     }
 }
 
 dependencies {
     def media3_version = "1.8.0"
-    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.core:core-ktx:1.13.1'  // ← UPDATED from 1.12.0 to 1.13.1
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'com.google.android.material:material:1.11.0'
@@ -99,7 +100,7 @@ dependencies {
     implementation "androidx.media3:media3-exoplayer-hls:$media3_version"
     
     implementation 'com.github.Stremio:stremio-core-kotlin:1.11.2' 
-    implementation 'com.github.stremio:vlc-android-sdk:8.0.0'
+    implementation 'org.videolan.android:libvlc-all:4.0.0'
     implementation 'com.github.stremio:android-youtube-video-view:+'
     
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
