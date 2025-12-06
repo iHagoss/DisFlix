@@ -1,4 +1,4 @@
-package com.stremio.app.tv
+package com.stremio.app
 
 import android.content.Intent
 import android.os.Bundle
@@ -10,9 +10,6 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.fragment.app.FragmentActivity
 import com.squareup.picasso.Picasso
-import com.stremio.app.R
-import com.stremio.app.StremioApplication
-import com.stremio.app.StremioCore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -45,11 +42,7 @@ class TvDetailActivity : FragmentActivity() {
         metaId = intent.getStringExtra(EXTRA_META_ID)
         metaType = intent.getStringExtra(EXTRA_META_TYPE)
         
-        try {
-            StremioCore.initCore(this)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to init StremioCore", e)
-        }
+        // StremioCore init is handled by the MainActivity Router
         
         initViews()
         loadMetaDetails()
@@ -140,6 +133,7 @@ class TvDetailActivity : FragmentActivity() {
     }
     
     private fun launchPlayer() {
+        // Ensure TvPlayerActivity is also moved to the com.stremio.app package
         val intent = Intent(this, TvPlayerActivity::class.java).apply {
             putExtra(TvPlayerActivity.EXTRA_ITEM_ID, metaId)
         }
@@ -148,6 +142,6 @@ class TvDetailActivity : FragmentActivity() {
     
     override fun onDestroy() {
         super.onDestroy()
-        StremioCore.shutdown()
+        // StremioCore shutdown is handled by the MainActivity Router
     }
 }
