@@ -6,18 +6,15 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        flavor: [tv, firestick, mobile]
-
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Setup Android NDK 27.2.12479018 (r27c)
+      - name: Setup Android NDK 26.3.11575790 (r26c)
         uses: nttld/setup-ndk@v1
         with:
-          ndk-version: 27.2.12479018
+          # CRITICAL FIX: Changed NDK version from the non-existent 27.2.x to the stable 26.3.x (r26c)
+          ndk-version: 26.3.11575790
           link-to-sdk: true
 
       - name: Set up JDK 17
@@ -40,9 +37,10 @@ jobs:
             ~/.m2
             .gradle
             app/build
-          key: ${{ runner.os }}-android-${{ matrix.flavor }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          # Removed matrix variable, now uses a generic key.
+          key: ${{ runner.os }}-android-universal-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
-            ${{ runner.os }}-android-${{ matrix.flavor }}-
+            ${{ runner.os }}-android-universal-
             ${{ runner.os }}-android-
 
       - name: Fix Gradle wrapper
@@ -52,17 +50,17 @@ jobs:
           chmod +x gradlew
           test -f gradle/wrapper/gradle-wrapper.jar || { echo "gradle-wrapper.jar missing"; exit 1; }
 
-      - name: Build ${{ matrix.flavor }} Debug APK
+      - name: Build Universal Debug APK
         env:
           GRADLE_OPTS: "-Xmx2048m -Dfile.encoding=UTF-8"
           GRADLE_USER_HOME: $PWD/.gradle
         run: |
-          FLAVOR="${{ matrix.flavor }}"
-          CAPITALIZED="$(echo ${FLAVOR:0:1} | tr '[:lower:]' '[:upper:]')${FLAVOR:1}"
-          ./gradlew assemble${CAPITALIZED}Debug --no-daemon --stacktrace
+          # Changed from 'assemble${CAPITALIZED}Debug' to the generic 'assembleDebug' for the universal build.
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
-      - name: Upload ${{ matrix.flavor }} APK artifact
+      - name: Upload Universal APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: stremio-${{ matrix.flavor }}-debug-apk
-          path: app/build/outputs/apk/${{ matrix.flavor }}/debug/*.apk
+          name: stremio-universal-debug-apk
+          # Path changed to reflect the generic debug output location.
+          path: app/build/outputs/apk/debug/*.apk
