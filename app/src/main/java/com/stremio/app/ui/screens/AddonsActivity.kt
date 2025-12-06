@@ -1,4 +1,4 @@
-package com.stremio.app.ui.screens
+package com.stremio.app
 
 import android.os.Bundle
 import android.view.View
@@ -41,7 +41,8 @@ class AddonsActivity : AppCompatActivity() {
         progressBar = findViewById(R.id.progress_bar)
         addAddonButton = findViewById(R.id.add_addon_button)
         
-        setSupportActionBar(findViewById(R.id.toolbar))
+        // This relies on having a Toolbar defined in R.id.toolbar in activity_addons.xml
+        setSupportActionBar(findViewById(R.id.toolbar)) 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "Addons"
         
@@ -74,7 +75,8 @@ class AddonsActivity : AppCompatActivity() {
     private fun showAddAddonDialog() {
         val input = EditText(this).apply {
             hint = "Enter addon manifest URL"
-            setPadding(48, 32, 48, 32)
+            // Use dimensional resources for padding (e.g., R.dimen.padding_large) for best practice
+            setPadding(48, 32, 48, 32) 
         }
         
         AlertDialog.Builder(this)
@@ -85,6 +87,8 @@ class AddonsActivity : AppCompatActivity() {
                 val url = input.text.toString().trim()
                 if (url.isNotEmpty()) {
                     installAddon(url)
+                } else {
+                    Toast.makeText(this, "URL cannot be empty", Toast.LENGTH_SHORT).show()
                 }
             }
             .setNegativeButton("Cancel", null)
@@ -111,15 +115,18 @@ class AddonsActivity : AppCompatActivity() {
     private fun showAddonDetails(addon: Addon) {
         val manifest = addon.manifest
         
-        val message = buildString {
-            appendLine("Name: ${manifest.name}")
-            appendLine("ID: ${manifest.id}")
-            appendLine("Version: ${manifest.version}")
-            manifest.description?.let { appendLine("\nDescription: $it") }
-            appendLine("\nTypes: ${manifest.types.joinToString(", ")}")
-            appendLine("Resources: ${manifest.resources.joinToString(", ") { it.name }}")
-            appendLine("\nCatalogs: ${manifest.catalogs.size}")
-        }
+        // Using string formatting for a cleaner build
+        val message = """
+            Name: ${manifest.name}
+            ID: ${manifest.id}
+            Version: ${manifest.version}
+            
+            ${manifest.description?.let { "Description: $it\n" } ?: ""}
+            Types: ${manifest.types.joinToString(", ")}
+            Resources: ${manifest.resources.joinToString(", ") { it.name }}
+            
+            Catalogs: ${manifest.catalogs.size}
+        """.trimIndent()
         
         AlertDialog.Builder(this)
             .setTitle(manifest.name)
