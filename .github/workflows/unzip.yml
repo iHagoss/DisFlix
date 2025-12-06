@@ -1,0 +1,43 @@
+name: Extract ZIPs in-place
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Extract ZIP Files In-Place
+        run: |
+          set -e
+          found=0
+          while IFS= read -r zipfile; do
+            found=1
+            dir=$(dirname "$zipfile")
+            unzip -o "$zipfile" -d "$dir"
+            rm "$zipfile"
+          done < <(find . -type f -name '*.zip')
+          if [ "$found" -eq 0 ]; then
+            echo "No ZIP files found."
+          fi
+      
+      - name: Commit Extracted Files
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "Extracted ZIPs in-place"
+          git pull --rebase origin "${{ github.ref_name }}" || true
+          git push origin HEAD:${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
