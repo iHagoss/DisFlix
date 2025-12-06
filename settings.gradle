@@ -1,49 +1,19 @@
-// ====================================================================================
-// PLUGIN MANAGEMENT SECTION
-// Defines where Gradle should look for plugins (like 'com.android.application').
-// ====================================================================================
 pluginManagement {
     repositories {
-        // Standard repository for Gradle plugins.
         gradlePluginPortal()
-        // Google's repository, primarily for Android Gradle Plugin (AGP).
         google()
-        // The central open-source Java/Android repository.
         mavenCentral()
-        // Repository for libraries built from GitHub, crucial for Stremio dependencies.
-        maven { url 'https://jitpack.io' } 
     }
 }
 
-// ====================================================================================
-// DEPENDENCY RESOLUTION MANAGEMENT SECTION
-// Defines where Gradle should look for all the regular project dependencies.
-// ====================================================================================
 dependencyResolutionManagement {
-    // CRITICAL: This setting tells Gradle to strictly prefer repositories defined here (in settings.gradle)
-    // over any old repositories defined inside the module-level build.gradle files.
-    // This helps prevent "Build was configured to prefer settings repositories..." warnings and ensures consistency.
     repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
     repositories {
-        // Google's official repository (for AndroidX and Jetpack libraries).
         google()
-        // The central open-source Java/Android repository (for libraries like JUnit, Gson, OkHttp).
         mavenCentral()
-        // CRITICAL: This is required for finding and downloading 'stremio-core-kotlin' 
-        // and 'android-youtube-video-view'.
         maven { url 'https://jitpack.io' }
     }
 }
 
-// ====================================================================================
-// PROJECT INCLUSION SECTION
-// Defines the root project name and which sub-modules (like 'app') are part of the build.
-// ====================================================================================
-// Sets the main name of the entire project.
 rootProject.name = "Stremio"
-// Includes the main application module.
 include ':app'
-// If you were including the stremio-core Rust module as a local project 
-// instead of a dependency, you would uncomment or add its path here.
-// include ':stremio-core'
-// include ':stremio-video'
