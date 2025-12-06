@@ -1,4 +1,4 @@
-name: Build Android App
+Name: Build Android App
 
 on:
   workflow_dispatch:
@@ -10,11 +10,11 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Setup Android NDK 26.3.11575790 (r26c)
-        uses: nttld/setup-ndk@v1
+      - name: Setup Android NDK r27d
+        uses: nttld/setup-ndk@v2
         with:
-          # CRITICAL FIX: Changed NDK version from the non-existent 27.2.x to the stable 26.3.x (r26c)
-          ndk-version: 26.3.11575790
+          # CRITICAL FIX: Using the short revision name 'r27d' (Latest LTS) for reliable download.
+          ndk-version: r27d
           link-to-sdk: true
 
       - name: Set up JDK 17
@@ -37,7 +37,6 @@ jobs:
             ~/.m2
             .gradle
             app/build
-          # Removed matrix variable, now uses a generic key.
           key: ${{ runner.os }}-android-universal-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-android-universal-
@@ -55,12 +54,10 @@ jobs:
           GRADLE_OPTS: "-Xmx2048m -Dfile.encoding=UTF-8"
           GRADLE_USER_HOME: $PWD/.gradle
         run: |
-          # Changed from 'assemble${CAPITALIZED}Debug' to the generic 'assembleDebug' for the universal build.
           ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload Universal APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: stremio-universal-debug-apk
-          # Path changed to reflect the generic debug output location.
           path: app/build/outputs/apk/debug/*.apk
