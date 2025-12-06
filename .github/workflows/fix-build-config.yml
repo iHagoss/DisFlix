@@ -45,7 +45,7 @@ jobs:
         echo "Updated root build.gradle"
     
     - name: Create Pull Request
-      uses: peter-evans/create-pull-request@v6
+      uses: peter-evans/create-pull-request@v7
       with:
         commit-message: 'Fix: Update compileSdk to 35 and resolve duplicate resources'
         title: 'Fix Build Configuration - Update to SDK 35'
