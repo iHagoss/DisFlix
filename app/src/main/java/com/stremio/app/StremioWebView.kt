@@ -5,6 +5,8 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.webkit.WebChromeClient
 import android.util.Log
+import android.webkit.JavascriptInterface
+import android.webkit.WebSettings
 
 class StremioWebView(context: Context) : WebView(context) {
     companion object {
@@ -14,7 +16,44 @@ class StremioWebView(context: Context) : WebView(context) {
 
     init {
         configureWebView()
+        // The API bridge must be added BEFORE the web page loads.
+        addJavascriptInterface(StremioCoreBridge(), "StremioCore")
         loadStremioWeb()
+    }
+
+    // Inner class to bridge JavaScript calls to Kotlin/JNI functions in StremioCore
+    private inner class StremioCoreBridge {
+        
+        // This annotation is crucial for exposing methods to JavaScript
+        @JavascriptInterface
+        fun getAddons(): String {
+            return StremioCore.getAddons()
+        }
+
+        @JavascriptInterface
+        fun getLibrary(): String {
+            return StremioCore.getLibrary()
+        }
+
+        @JavascriptInterface
+        fun search(query: String): String {
+            return StremioCore.search(query)
+        }
+
+        @JavascriptInterface
+        fun dispatchAction(action: String, payload: String): String {
+            return StremioCore.dispatchAction(action, payload)
+        }
+
+        @JavascriptInterface
+        fun getSkipIntroData(itemId: String, duration: Long): String {
+            return StremioCore.getSkipIntroData(itemId, duration)
+        }
+        
+        @JavascriptInterface
+        fun invokeAddon(addonId: String, method: String, args: String): String {
+            return StremioCore.invokeAddon(addonId, method, args)
+        }
     }
 
     private fun configureWebView() {
@@ -24,10 +63,11 @@ class StremioWebView(context: Context) : WebView(context) {
             databaseEnabled = true
             mediaPlaybackRequiresUserGesture = false
             allowFileAccess = true
-            allowUniversalAccessFromFileURLs = true
-            mixedContentMode = MIXED_CONTENT_ALLOW_ALL
+            // Setting this is vital for web apps loaded via file:///
+            allowUniversalAccessFromFileURLs = true 
+            mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
             userAgentString = "Stremio/Android"
-            cacheMode = android.webkit.WebSettings.LOAD_DEFAULT
+            cacheMode = WebSettings.LOAD_DEFAULT
         }
 
         webViewClient = object : WebViewClient() {
@@ -50,6 +90,7 @@ class StremioWebView(context: Context) : WebView(context) {
 
         webChromeClient = object : WebChromeClient() {
             override fun onConsoleMessage(consoleMessage: android.webkit.ConsoleMessage?): Boolean {
+                // Allows us to see JS logs in Logcat
                 Log.d(TAG, "[JS Console] ${consoleMessage?.message()}")
                 return true
             }
@@ -73,26 +114,39 @@ class StremioWebView(context: Context) : WebView(context) {
     }
 
     private fun injectStremioAPI() {
+        // The window.StremioCore object is now available globally due to addJavascriptInterface().
+        // We now inject the window.stremioNative object, which wraps the JSON parsing logic.
         val jsCode = """
             (function() {
-                window.stremioNative = {
-                    getAddons: function() {
-                        return JSON.parse(StremioCore.getAddons());
-                    },
-                    getLibrary: function() {
-                        return JSON.parse(StremioCore.getLibrary());
-                    },
-                    search: function(query) {
-                        return JSON.parse(StremioCore.search(query));
-                    },
-                    dispatchAction: function(action, payload) {
-                        return JSON.parse(StremioCore.dispatchAction(action, JSON.stringify(payload || {})));
-                    },
-                    getSkipIntroData: function(itemId, duration) {
-                        return JSON.parse(StremioCore.getSkipIntroData(itemId, duration));
-                    }
-                };
-                console.log('Stremio Native API injected');
+                if (window.StremioCore) {
+                    window.stremioNative = {
+                        getAddons: function() {
+                            return JSON.parse(StremioCore.getAddons());
+                        },
+                        getLibrary: function() {
+                            return JSON.parse(StremioCore.getLibrary());
+                        },
+                        search: function(query) {
+                            return JSON.parse(StremioCore.search(query));
+                        },
+                        dispatchAction: function(action, payload) {
+                            // payload must be stringified before sending to Kotlin bridge
+                            var payloadString = JSON.stringify(payload || {});
+                            var result = StremioCore.dispatchAction(action, payloadString);
+                            return JSON.parse(result);
+                        },
+                        getSkipIntroData: function(itemId, duration) {
+                            return JSON.parse(StremioCore.getSkipIntroData(itemId, duration));
+                        },
+                        invokeAddon: function(addonId, method, args) {
+                            // args is already a JSON string from the web app
+                            return JSON.parse(StremioCore.invokeAddon(addonId, method, args));
+                        }
+                    };
+                    console.log('Stremio Native API injected and ready.');
+                } else {
+                    console.error('StremioCore bridge not found in WebView.');
+                }
             })();
         """.trimIndent()
         evaluateJavascript(jsCode) { result ->
@@ -100,14 +154,9 @@ class StremioWebView(context: Context) : WebView(context) {
         }
     }
 
-    fun injectStremioCore(addonId: String, method: String, args: String) {
-        val js = """
-            window.stremioCore = {
-                invoke: function(addonId, method, args) {
-                    return StremioCore.$method(JSON.parse(args));
-                }
-            };
-        """.trimIndent()
-        evaluateJavascript(js, null)
-    }
+    // This function is now redundant, as the bridge logic is handled in StremioCoreBridge
+    // and the stremioNative wrapper.
+    // fun injectStremioCore(addonId: String, method: String, args: String) { ... }
+    
+    // We can remove it or leave it commented out. For a clean compile, let's remove it.
 }
