@@ -11,7 +11,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Android NDK r27d
-        uses: nttld/setup-ndk@v2
+        uses: nttld/setup-ndk@v1
         with:
           # CRITICAL FIX: Using the short revision name 'r27d' (Latest LTS) for reliable download.
           ndk-version: r27d
