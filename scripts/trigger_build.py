@@ -10,7 +10,7 @@ Usage:
 Environment variables:
     GITHUB_TOKEN: Personal access token with 'repo' scope
     GITHUB_OWNER: Repository owner (default: iHagoss)
-    GITHUB_REPO: Repository name (default: STEMSKII)
+    GITHUB_REPO: Repository name (default: DisFlix)
 """
 
 import argparse
@@ -21,7 +21,7 @@ import time
 from urllib import request, error
 
 DEFAULT_OWNER = "iHagoss"
-DEFAULT_REPO = "STEMSKII"
+DEFAULT_REPO = "DisFlix"
 API_VERSION = "2022-11-28"
 
 
