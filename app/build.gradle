@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace 'com.stremio.app'
-    compileSdk 34 
+    compileSdk 35 
 
     defaultConfig {
         applicationId "com.stremio.app"
@@ -60,6 +60,17 @@ android {
         jniLibs {
             useLegacyPackaging = true
         }
+    }
+}
+
+configurations.all {
+    resolutionStrategy {
+        force 'androidx.appcompat:appcompat:1.6.1'
+        force 'com.google.android.material:material:1.11.0'
+        force 'androidx.constraintlayout:constraintlayout:2.1.4'
+        force 'androidx.coordinatorlayout:coordinatorlayout:1.2.0'
+        force 'androidx.core:core:1.13.1'
+        force 'androidx.leanback:leanback:1.1.0-rc02'
     }
 }
 
