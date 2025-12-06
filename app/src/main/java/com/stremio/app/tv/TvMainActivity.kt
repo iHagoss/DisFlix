@@ -1,10 +1,7 @@
-package com.stremio.app.tv
+package com.stremio.app
 
 import android.os.Bundle
-import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
-import com.stremio.app.StremioCore
-import com.stremio.app.StremioWebView
 
 class TvMainActivity : AppCompatActivity() {
     private lateinit var webView: StremioWebView
@@ -12,20 +9,15 @@ class TvMainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Initialize for TV
-        try {
-            StremioCore.initCore(this)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-
+        // Stremio Core initialization is now handled by the MainActivity (Router).
+        
         webView = StremioWebView(this)
         setContentView(webView)
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        StremioCore.shutdown()
+        // Stremio Core shutdown is now handled by the MainActivity (Router).
         webView.destroy()
     }
 }
