@@ -13,7 +13,6 @@ jobs:
       - name: Setup Android NDK r27d
         uses: nttld/setup-ndk@v1
         with:
-          # CRITICAL FIX: Using the short revision name 'r27d' (Latest LTS) for reliable download.
           ndk-version: r27d
           link-to-sdk: true
 
@@ -24,19 +23,18 @@ jobs:
           java-version: 17
           cache: gradle
 
-      - name: Cache build environments
+      - name: Cache build environments (Gradle, SDK, NDK)
+        # This step caches the dependencies and environment components
         uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-            ~/.gradle/native
-            ~/.gradle/daemon
-            ~/.gradle/buildOutputCleanup
-            ~/.android
+            ~/.android # New: Caches the Android SDK (including build tools, platforms, and NDK)
             ~/.m2
             .gradle
             app/build
+          # The key uses the OS and the hash of the dependency files to ensure cache invalidation when dependencies change
           key: ${{ runner.os }}-android-universal-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-android-universal-
