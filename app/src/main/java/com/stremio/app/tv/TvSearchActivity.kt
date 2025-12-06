@@ -1,9 +1,7 @@
-package com.stremio.app.tv
+package com.stremio.app
 
 import android.os.Bundle
 import androidx.fragment.app.FragmentActivity
-import com.stremio.app.R
-import com.stremio.app.StremioCore
 
 class TvSearchActivity : FragmentActivity() {
     
@@ -11,15 +9,18 @@ class TvSearchActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tv_search)
         
-        try {
-            StremioCore.initCore(this)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+        // StremioCore initialization is handled by the MainActivity Router, not here.
+        
+        // You would typically initialize your Leanback Search Fragment here
+        // if (savedInstanceState == null) {
+        //     supportFragmentManager.beginTransaction()
+        //         .replace(R.id.search_fragment_container, SearchFragment())
+        //         .commitNow()
+        // }
     }
     
     override fun onDestroy() {
         super.onDestroy()
-        StremioCore.shutdown()
+        // StremioCore shutdown is handled by the MainActivity Router to prevent conflicts.
     }
 }
