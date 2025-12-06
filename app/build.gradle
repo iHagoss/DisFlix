@@ -6,7 +6,8 @@ plugins {
 
 android {
     namespace 'com.stremio.app'
-    compileSdk 34
+    // Ensure you are using the latest stable compileSdk
+    compileSdk 34 
 
     defaultConfig {
         applicationId "com.stremio.app"
@@ -18,30 +19,13 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         
         ndk {
+            // Keep all necessary ABI filters for universal compatibility (ARM and x86 devices)
             abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
         }
     }
-
-    flavorDimensions += "device"
     
-    productFlavors {
-        tv {
-            dimension "device"
-            applicationIdSuffix ".tv"
-            versionNameSuffix "-tv"
-        }
-        firestick {
-            dimension "device"
-            applicationIdSuffix ".firestick"
-            versionNameSuffix "-firestick"
-            minSdk 22
-        }
-        mobile {
-            dimension "device"
-            applicationIdSuffix ".mobile"
-            versionNameSuffix "-mobile"
-        }
-    }
+    // The entire 'flavorDimensions' and 'productFlavors' blocks have been REMOVED 
+    // to build a single, universal APK. All code now uses the single 'defaultConfig'.
 
     buildTypes {
         debug {
@@ -79,16 +63,17 @@ android {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
         }
         jniLibs {
+            // Use legacy packaging for maximum compatibility with older devices/tools like MT Manager
             useLegacyPackaging = true
         }
     }
 }
 
-repositories {
-    maven { url 'https://jitpack.io' }
-}
+// REMOVED 'repositories' block here to prevent conflicts and warnings.
+// All repositories (google, mavenCentral, jitpack) must be in settings.gradle.
 
 dependencies {
+    // Core Dependencies (Updated to very recent stable versions for fresh build)
     implementation 'androidx.core:core-ktx:1.12.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
@@ -98,11 +83,13 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0'
     
+    // TV/Leanback Dependencies (Included for ALL devices, but only used on TV at runtime)
     implementation 'androidx.leanback:leanback:1.0.0'
     implementation 'androidx.tvprovider:tvprovider:1.0.0'
     implementation 'androidx.preference:preference-ktx:1.2.1'
     
-    def media3_version = "1.2.1"
+    // Media3 (Updated to 1.3.0 for latest stable version)
+    def media3_version = "1.3.0"
     implementation "androidx.media3:media3-exoplayer:$media3_version"
     implementation "androidx.media3:media3-ui:$media3_version"
     implementation "androidx.media3:media3-common:$media3_version"
@@ -112,14 +99,16 @@ dependencies {
     implementation "androidx.media3:media3-datasource-okhttp:$media3_version"
     implementation "androidx.media3:media3-exoplayer-hls:$media3_version"
     
+    // Stremio/VLC Dependencies
     implementation 'org.videolan.android:libvlc-all:3.6.0'
     
+    // Networking & Utilities (Updated Kotlin Coroutines & Kotlin Stdlib for stability)
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation 'com.squareup.okhttp3:logging-interceptor:4.12.0'
     implementation 'com.google.code.gson:gson:2.10.1'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3'
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.22"
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.23" 
     implementation 'com.squareup.picasso:picasso:2.8'
     implementation 'androidx.multidex:multidex:2.0.1'
     
