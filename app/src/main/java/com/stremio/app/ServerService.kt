@@ -38,9 +38,12 @@ class ServerService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d(TAG, "ServerService started")
         
+        // Starts the service in the foreground immediately
         startForeground(NOTIFICATION_ID, createNotification())
+        // Start the core server logic
         startServer()
         
+        // This ensures the service restarts if killed by the OS
         return START_STICKY
     }
     
@@ -49,8 +52,8 @@ class ServerService : Service() {
     }
     
     override fun onDestroy() {
-        super.onDestroy()
         stopServer()
+        super.onDestroy()
         Log.d(TAG, "ServerService destroyed")
     }
     
@@ -59,6 +62,7 @@ class ServerService : Service() {
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 CHANNEL_NAME,
+                // IMPORTANCE_LOW hides the notification icon from the status bar but still keeps it persistent
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
                 description = "Stremio background server"
@@ -71,19 +75,21 @@ class ServerService : Service() {
     }
     
     private fun createNotification(): Notification {
+        // Launches the main activity when the notification is tapped
         val pendingIntent = PendingIntent.getActivity(
             this,
             0,
             packageManager.getLaunchIntentForPackage(packageName),
-            PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_IMMUTABLE // Use FLAG_IMMUTABLE for modern Android versions
         )
         
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Stremio")
             .setContentText("Server running in background")
-            .setSmallIcon(R.drawable.ic_launcher)
+            // Assuming R.drawable.ic_stremio_icon exists or using R.drawable.ic_launcher as placeholder
+            .setSmallIcon(R.drawable.ic_launcher) 
             .setContentIntent(pendingIntent)
-            .setOngoing(true)
+            .setOngoing(true) // Makes the notification non-dismissible
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
     }
@@ -91,7 +97,8 @@ class ServerService : Service() {
     private fun startServer() {
         if (!isServerRunning) {
             try {
-                StremioCore.initCore(applicationContext)
+                // Initialize the native core using the Application Context
+                StremioCore.initCore(applicationContext) 
                 isServerRunning = true
                 Log.i(TAG, "Stremio server started")
             } catch (e: Exception) {
