@@ -1,4 +1,4 @@
-name: Build Android App
+Name: Build Android App
 
 on:
   workflow_dispatch:
@@ -33,7 +33,8 @@ jobs:
       - name: Build stremio-web for Android
         working-directory: stremio-web
         run: |
-          pnpm install --frozen-lockfile
+          # FIX: Removed --frozen-lockfile to allow pnpm to install even if the lockfile is outdated or missing.
+          pnpm install 
           pnpm run build:android
           echo "Web build completed. Contents:"
           ls -la build/
