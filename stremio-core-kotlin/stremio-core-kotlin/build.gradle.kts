@@ -14,7 +14,7 @@ plugins {
   kotlin("multiplatform") version "2.2.21"
   id("org.mozilla.rust-android-gradle.rust-android") version "0.9.4"
   id("com.google.protobuf") version "0.9.5"
-  id("com.android.library") version "8.5.2"
+  id("com.android.library") version "8.13.1"
   id("maven-publish")
 }
 
