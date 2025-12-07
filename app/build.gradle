@@ -64,6 +64,17 @@ android {
     }
 }
 
+configurations.all {
+    resolutionStrategy {
+        force 'androidx.appcompat:appcompat:1.6.1'
+        force 'com.google.android.material:material:1.11.0'
+        force 'androidx.constraintlayout:constraintlayout:2.1.4'
+        force 'androidx.coordinatorlayout:coordinatorlayout:1.2.0'
+        force 'androidx.core:core:1.13.1'
+        force 'androidx.leanback:leanback:1.1.0-rc02'
+    }
+}
+
 // ← ADDED - Force consistent versions to prevent conflicts
 configurations.all {
     resolutionStrategy {
