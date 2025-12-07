@@ -23,7 +23,7 @@ val pbandkVersion: String by extra
 val protobufVersion: String by extra
 
 buildscript {
-  extra["kotlinVersion"] = "1.9.25"
+  extra["kotlinVersion"] = "2.2.21"
   extra["pbandkVersion"] = "0.16.0"
   extra["protobufVersion"] = "4.28.3"
 
