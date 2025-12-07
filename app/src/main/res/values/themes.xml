@@ -18,7 +18,6 @@
         <item name="android:colorBackground">@color/stremio_background</item>
         <item name="colorSurface">@color/stremio_surface</item>
         <item name="colorOnSurface">@color/stremio_on_surface</item>
-        <item name="colorBackground">@color/stremio_background</item>
         <item name="colorOnBackground">@color/stremio_on_background</item>
 
         <!-- System bars -->
