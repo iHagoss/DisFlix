@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Core brand -->
+    <color name="stremio_primary">#664181</color>
+    <color name="stremio_primary_light">#A682C0</color>
+    <color name="stremio_primary_dark">#4B305F</color>
+
+    <!-- Accent / supporting -->
+    <color name="stremio_accent_blue">#7B5BF5</color>
+    <color name="stremio_accent_yellow">#F9C82E</color>
+    <color name="stremio_black">#0F0D1B</color>
+
+    <!-- Material baseline neutrals (override to fit your UI) -->
+    <color name="stremio_surface">#121212</color>
+    <color name="stremio_on_surface">#FFFFFF</color>
+    <color name="stremio_background">#0F0D1B</color>
+    <color name="stremio_on_background">#FFFFFF</color>
+</resources>
