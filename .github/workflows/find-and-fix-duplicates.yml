@@ -1,0 +1,56 @@
+name: Find and Fix Duplicate Resources
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Search for problematic files
+      run: |
+        echo "=== Searching entire project for values.xml ==="
+        find . -name "values.xml" -type f ! -path "*/build/*" ! -path "*/.gradle/*"
+        
+        echo ""
+        echo "=== Searching for attrs.xml ==="
+        find . -name "attrs.xml" -type f ! -path "*/build/*" ! -path "*/.gradle/*"
+        
+        echo ""
+        echo "=== Checking app/src/main/res structure ==="
+        ls -la app/src/main/res/values/ 2>/dev/null || echo "No values directory"
+        
+    - name: Show current app/build.gradle
+      run: |
+        echo "=== Current compileSdk ==="
+        grep "compileSdk" app/build.gradle
+        
+    - name: Delete problematic files and update config
+      run: |
+        # Remove any values.xml in source
+        find app/src/main/res -name "values.xml" -type f -delete
+        
+        # Update compileSdk
+        sed -i 's/compileSdk 34/compileSdk 35/' app/build.gradle
+        
+        # Add gradle properties if missing
+        if ! grep -q "suppressUnsupportedCompileSdk" gradle.properties; then
+          echo "" >> gradle.properties
+          echo "android.suppressUnsupportedCompileSdk=35" >> gradle.properties
+          echo "android.useAndroidX=true" >> gradle.properties
+          echo "android.enableJetifier=true" >> gradle.properties
+        fi
+        
+    - name: Commit changes
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add -A
+        git diff --staged --quiet || git commit -m "Fix: Remove duplicate resources and update to SDK 35"
+        git push
