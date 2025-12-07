@@ -20,3 +20,10 @@ updates:
       interval: "weekly"
     commit-message:
       prefix: "deps"
+
+  - package-ecosystem: "gradle"
+    directory: "/vlc-android-sdk"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps"
