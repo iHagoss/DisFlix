@@ -11,6 +11,6 @@ proc-macro = true
 syn = "2"
 quote = "1"
 proc-macro2 = "1"
-proc-macro-crate = "1"
+proc-macro-crate = "3"
 proc_macro_roids = "0.8"
 case = "1"
