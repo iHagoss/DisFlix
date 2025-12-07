@@ -99,7 +99,7 @@
     </string-array>
     <string-array name="interface_locales">
         <item>en-US</item>
-    <string-array name="pref_frame_rate_matching_entries">
+    </string-array> <string-array name="pref_frame_rate_matching_entries">
         <item>@string/label_stremio_tv_settings_frame_rate_matching_disabled</item>
         <item>@string/label_stremio_tv_settings_frame_rate_matching_frame_rate_only</item>
         <item>@string/label_stremio_tv_settings_frame_rate_matching_frame_rate_and_resolution</item>
