@@ -1,0 +1,32 @@
+name: Diagnose Build Issues
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Check for duplicate resource files
+      run: |
+        echo "=== Files in app/src/main/res/values/ ==="
+        ls -la app/src/main/res/values/ || echo "Directory doesn't exist"
+        
+        echo ""
+        echo "=== Any values.xml in source? ==="
+        find app/src -name "values.xml" -o -name "attrs.xml" | head -20
+        
+        echo ""
+        echo "=== Current app/build.gradle compileSdk ==="
+        grep -A2 -B2 "compileSdk" app/build.gradle
+        
+        echo ""
+        echo "=== gradle.properties content ==="
+        cat gradle.properties
+        
+    - name: Upload findings
+      run: |
+        echo "Diagnostic complete. Check logs above."
