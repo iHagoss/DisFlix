@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Splash screen attributes -->
+    <attr name="splashScreenIconSize" format="dimension" />
+    <attr name="windowSplashScreenBackground" format="color" />
+    <attr name="windowSplashScreenIconBackgroundColor" format="color" />
+
+    <!-- Card view attributes -->
+    <attr name="cardViewBackgroundColor" format="color" />
+    <attr name="cardViewSelectedBackgroundColor" format="color" />
+    <attr name="cardInCinemaBackgroundColor" format="color" />
+    <attr name="cardInCinemaCornerRadius" format="dimension" />
+
+    <!-- Menu attributes -->
+    <attr name="menuBackgroundColor" format="color" />
+    <attr name="menuBackgroundBorderColor" format="color" />
+    <attr name="menuFocusedBackgroundColor" format="color" />
+    <attr name="menuFocusedBackgroundBorderColor" format="color" />
+    <attr name="menuSelectedBackgroundColor" format="color" />
+    <attr name="menuSelectedBackgroundBorderColor" format="color" />
+    <attr name="menuBackgroundBorderSize" format="dimension" />
+    <attr name="menuCornerRadius" format="dimension" />
+    <attr name="menuBackgroundPadding" format="dimension" />
+</resources>
