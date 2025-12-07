@@ -25,7 +25,7 @@ val protobufVersion: String by extra
 buildscript {
   extra["kotlinVersion"] = "1.9.25"
   extra["pbandkVersion"] = "0.16.0"
-  extra["protobufVersion"] = "4.28.3"
+  extra["protobufVersion"] = "4.33.2"
 
   repositories {
     google()
