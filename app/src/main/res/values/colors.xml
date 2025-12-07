@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Core brand -->
+    <color name="stremio_primary">#664181</color>
+    <color name="stremio_primary_light">#A682C0</color>
+    <color name="stremio_primary_dark">#4B305F</color>
+
+    <!-- Accent / supporting -->
+    <color name="stremio_accent_blue">#7B5BF5</color>
+    <color name="stremio_accent_yellow">#F9C82E</color>
+    <color name="stremio_black">#0F0D1B</color>
+
+    <!-- Material baseline neutrals (override to fit your UI) -->
+    <color name="stremio_surface">#121212</color>
+    <color name="stremio_on_surface">#FFFFFF</color>
+    <color name="stremio_background">#0F0D1B</color>
+    <color name="stremio_on_background">#FFFFFF</color>
+
+    <!-- Primary colors referenced by drawables -->
+    <color name="primaryColor">#0F0D1B</color>
+    <color name="tertiaryColor">#664181</color>
+    <color name="overlayColor">#33FFFFFF</color>
+
+    <!-- Leanback switch colors -->
+    <color name="lb_switch_compat_track_tint">#664181</color>
+    <color name="lb_switch_compat_track_color">#4D664181</color>
+
+    <!-- Text colors -->
+    <color name="stremio_text_primary">#FFFFFF</color>
+    <color name="stremio_accent">#7B5BF5</color>
+    <color name="stremio_text_secondary">#B3FFFFFF</color>
+    
+    <!-- Error/Warning states -->
+    <color name="stremio_error">#CF6679</color>
+    
+    <!-- Surface variants -->
+    <color name="stremio_surface_variant">#1E1E1E</color>
+</resources>

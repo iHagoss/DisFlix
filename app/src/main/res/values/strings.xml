@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Stremio</string>
+    <string name="app_version">5.0.0</string>
+    <string name="stremio_description">Stream movies and series instantly</string>
+    <string name="error_no_internet">No internet connection</string>
+    <string name="error_loading">Error loading content</string>
+    <string name="retry">Retry</string>
+    <string name="cancel">Cancel</string>
+    <string name="settings">Settings</string>
+    <string name="search">Search</string>
+    <string name="library">Library</string>
+    <string name="discover">Discover</string>
+    <string name="play">Play</string>
+    <string name="poster">Poster</string>
+    <string name="skip_intro">Skip Intro</string>
+    <string name="login">Login</string>
+    <string name="logout">Logout</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="addons">Addons</string>
+    <string name="streams">Streams</string>
+    <string name="loading">Loading...</string>
+    <string name="no_content">No content available</string>
+    <string name="player_error">Playback error</string>
+    <string name="connecting">Connecting...</string>
+    <string name="label_login_title">Welcome to Stremio</string>
+    <string name="button_create_account">Create Account</string>
+    <string name="button_skip_for_now">Skip for now</string>
+    <string name="hint_search_input">Search movies, series...</string>
+    <string name="button_add_addon">Add Addon</string>
+    <string name="label_settings_account">Account</string>
+    <string name="label_settings_version">Version 1.0.0</string>
+    <string name="label_settings_app_info">Open Source Stremio Client</string>
+    <string name="button_add_to_library">Add to Library</string>
+    <string name="button_remove_from_library">Remove from Library</string>
+    <string name="label_videos">Videos</string>
+        <!-- Frame Rate Matching Settings -->
+    <string name="label_stremio_tv_settings_frame_rate_matching_disabled">Disabled</string>
+    <string name="label_stremio_tv_settings_frame_rate_matching_frame_rate_only">Frame Rate Only</string>
+    <string name="label_stremio_tv_settings_frame_rate_matching_frame_rate_and_resolution">Frame Rate and Resolution</string>
+    
+    <!-- External Player Settings -->
+    <string name="label_stremio_tv_settings_external_player">External Player</string>
+    
+    <!-- Server Settings -->
+    <string name="label_server_settings_mode_embedded">Embedded</string>
+    <string name="label_server_settings_mode_remote">Remote</string>
+    
+    <!-- Torrent Profile Settings -->
+    <string name="label_torrent_profile_default">Default</string>
+    <string name="label_torrent_profile_soft">Soft</string>
+    <string name="label_torrent_profile_balanced">Balanced</string>
+    <string name="label_torrent_profile_aggressive">Aggressive</string>
+    
+    <!-- Subtitle Size Settings -->
+    <string name="label_stremio_tv_settings_subtitle_size_small">Small</string>
+    <string name="label_stremio_tv_settings_subtitle_size_medium">Medium</string>
+    <string name="label_stremio_tv_settings_subtitle_size_large">Large</string>
+    <string name="label_stremio_tv_settings_subtitle_size_extra_large">Extra Large</string>
+    
+    <!-- UI Density Settings -->
+    <string name="label_stremio_tv_settings_ui_density_comfortable">Comfortable</string>
+    <string name="label_stremio_tv_settings_ui_density_compact">Compact</string>
+    
+    <!-- TV Announcement -->
+    <string name="label_stremio_tv_announcement_qr_code">Scan QR Code</string>
+    <string name="label_stremio_tv_announcement_close">Close</string>
+    
+    <!-- Addon strings -->
+    <string name="label_install_addon">Install</string>
+    <string name="label_stremio_tv_addons_title">Addons</string>
+    <string name="label_stremio_tv_addons_subtitle">Manage your addons</string>
+    <string name="label_stremio_tv_addons_sync_addons">Sync Addons</string>
+
+    <!-- Login strings -->
+    <string name="label_stremio_tv_login_title">Login to Stremio</string>
+    <string name="label_stremio_tv_login_step_one">Step 1: Go to strem.io/login</string>
+    <string name="label_stremio_tv_login_step_two">Step 2: Enter the code below</string>
+    <string name="label_stremio_tv_login_new_link">Get New Code</string>
+
+    <!-- Error and button strings -->
+    <string name="label_err_no_meta">Unable to load metadata</string>
+    <string name="label_button_cancel">Cancel</string>
+    <string name="label_stremio_tv_player_button_skip_chapter">Skip Chapter</string>
+</resources>
