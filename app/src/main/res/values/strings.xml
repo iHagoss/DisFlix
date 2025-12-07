@@ -35,4 +35,31 @@
     <string name="button_add_to_library">Add to Library</string>
     <string name="button_remove_from_library">Remove from Library</string>
     <string name="label_videos">Videos</string>
+        <!-- Frame Rate Matching Settings -->
+    <string name="label_stremio_tv_settings_frame_rate_matching_disabled">Disabled</string>
+    <string name="label_stremio_tv_settings_frame_rate_matching_frame_rate_only">Frame Rate Only</string>
+    <string name="label_stremio_tv_settings_frame_rate_matching_frame_rate_and_resolution">Frame Rate and Resolution</string>
+    
+    <!-- External Player Settings -->
+    <string name="label_stremio_tv_settings_external_player">External Player</string>
+    
+    <!-- Server Settings -->
+    <string name="label_server_settings_mode_embedded">Embedded</string>
+    <string name="label_server_settings_mode_remote">Remote</string>
+    
+    <!-- Torrent Profile Settings -->
+    <string name="label_torrent_profile_default">Default</string>
+    <string name="label_torrent_profile_soft">Soft</string>
+    <string name="label_torrent_profile_balanced">Balanced</string>
+    <string name="label_torrent_profile_aggressive">Aggressive</string>
+    
+    <!-- Subtitle Size Settings -->
+    <string name="label_stremio_tv_settings_subtitle_size_small">Small</string>
+    <string name="label_stremio_tv_settings_subtitle_size_medium">Medium</string>
+    <string name="label_stremio_tv_settings_subtitle_size_large">Large</string>
+    <string name="label_stremio_tv_settings_subtitle_size_extra_large">Extra Large</string>
+    
+    <!-- UI Density Settings -->
+    <string name="label_stremio_tv_settings_ui_density_comfortable">Comfortable</string>
+    <string name="label_stremio_tv_settings_ui_density_compact">Compact</string>
 </resources>
