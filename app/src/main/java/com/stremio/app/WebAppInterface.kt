@@ -1,4 +1,3 @@
-
 package com.stremio.app
 
 import android.app.Activity
@@ -18,27 +17,53 @@ import androidx.core.content.ContextCompat
 import org.json.JSONObject
 
 /**
- * WebAppInterface provides the bridge between JavaScript in WebView and Kotlin code
- * All methods are exposed to JavaScript via @JavascriptInterface annotation
+ * WebAppInterface - JavaScript ↔ Android Bridge
+ *
+ * This interface is exposed to the WebView's JavaScript context as "window.Android".
+ * It allows the Stremio Web UI to invoke native Android functionality.
+ *
+ * Usage in JavaScript:
+ *   window.Android.log("Hello from JS");
+ *   window.Android.openPlayer(streamUrl, title);
+ *   window.Android.getDeviceInfo();
+ *
+ * All methods marked with @JavascriptInterface are callable from JavaScript.
+ * These methods run on the WebView's JavaScript thread, NOT the UI thread.
+ *
+ * IMPORTANT: This bridge enables addon synchronization after user login.
+ * When the user authenticates in the web UI, it calls syncAddons() which
+ * fetches the user's addon configuration from Stremio's servers.
  */
 class WebAppInterface(private val context: Context) {
-    
+
     companion object {
         private const val TAG = "WebAppInterface"
     }
-    
+
+    /**
+     * Displays a short toast message on the Android UI.
+     * JavaScript usage: window.Android.showToast("Message text");
+     */
     @JavascriptInterface
     fun showToast(message: String) {
         (context as? Activity)?.runOnUiThread {
             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
         }
     }
-    
+
+    /**
+     * Logs messages from JavaScript to Android's logcat.
+     * JavaScript usage: window.Android.log("Debug message");
+     */
     @JavascriptInterface
     fun log(message: String) {
         Log.d(TAG, "[JS] $message")
     }
-    
+
+    /**
+     * Called when the Stremio Bridge is ready in the WebView.
+     * JavaScript usage: (called internally by the web UI)
+     */
     @JavascriptInterface
     fun onBridgeReady() {
         Log.d(TAG, "Stremio Bridge is ready")
@@ -46,15 +71,17 @@ class WebAppInterface(private val context: Context) {
             (context as? MainActivity)?.onBridgeReady()
         }
     }
-    
+
+    /**
+     * Dispatches an action to the Stremio Core.
+     * JavaScript usage: const result = await window.Android.dispatchAction('{"action":"someAction"}');
+     */
     @JavascriptInterface
     fun dispatchAction(actionJson: String): String {
         Log.d(TAG, "Dispatching action: $actionJson")
         return try {
-            // Forward to StremioCore if available
             if (StremioCore.isLibraryLoaded()) {
-                val result = StremioCore.dispatchAction(actionJson, "{}")
-                result
+                StremioCore.dispatchAction(actionJson, "{}")
             } else {
                 "{\"status\":\"received\",\"fallback\":true}"
             }
@@ -63,216 +90,52 @@ class WebAppInterface(private val context: Context) {
             "{\"error\":\"${e.message}\"}"
         }
     }
-    
+
+    /**
+     * Navigates the web UI to a specific path.
+     * JavaScript usage: window.Android.navigate("/some/path");
+     */
     @JavascriptInterface
     fun navigate(path: String) {
         Log.d(TAG, "Navigate to: $path")
-        (context as? Activity)?.runOnUiThread {
+        (context as? MainActivity)?.runOnUiThread {
             (context as? MainActivity)?.navigateToPath(path)
         }
     }
 
+    /**
+     * Opens the Stremio in-app player for a given stream URL and title.
+     * JavaScript usage: window.Android.openPlayer("streamUrl", "Video Title");
+     * 
+     * Note: This 2-argument version is for simple playback with just URL and title.
+     */
     @JavascriptInterface
     fun openPlayer(streamUrl: String, title: String) {
         Log.d(TAG, "Opening player: $title - $streamUrl")
         (context as? Activity)?.runOnUiThread {
-            val intent = Intent(context, PlayerActivity::class.java).apply {
-                putExtra(PlayerActivity.EXTRA_STREAM_URL, streamUrl)
-                putExtra(PlayerActivity.EXTRA_TITLE, title)
-            }
-            context.startActivity(intent)
-        }
-    }
-
-    @JavascriptInterface
-    fun openExternalPlayer(streamUrl: String) {
-        Log.d(TAG, "Opening external player: $streamUrl")
-        (context as? Activity)?.runOnUiThread {
             try {
-                val intent = Intent(Intent.ACTION_VIEW).apply {
-                    setDataAndType(Uri.parse(streamUrl), "video/*")
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                val intent = Intent(context, PlayerActivity::class.java).apply {
+                    putExtra(PlayerActivity.EXTRA_STREAM_URL, streamUrl)
+                    putExtra(PlayerActivity.EXTRA_TITLE, title)
                 }
-                context.startActivity(Intent.createChooser(intent, "Play with"))
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to open external player", e)
-                Toast.makeText(context, "No video player found", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    @JavascriptInterface
-    fun shareUrl(url: String) {
-        Log.d(TAG, "Sharing URL: $url")
-        (context as? Activity)?.runOnUiThread {
-            val intent = Intent(Intent.ACTION_SEND).apply {
-                type = "text/plain"
-                putExtra(Intent.EXTRA_TEXT, url)
-            }
-            context.startActivity(Intent.createChooser(intent, "Share via"))
-        }
-    }
-
-    @JavascriptInterface
-    fun copyToClipboard(text: String) {
-        Log.d(TAG, "Copying to clipboard")
-        (context as? Activity)?.runOnUiThread {
-            val clipboard = ContextCompat.getSystemService(context, ClipboardManager::class.java)
-            clipboard?.setPrimaryClip(ClipData.newPlainText("Stremio", text))
-            Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    @JavascriptInterface
-    fun openUrl(url: String) {
-        Log.d(TAG, "Opening URL: $url")
-        (context as? Activity)?.runOnUiThread {
-            try {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                 context.startActivity(intent)
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to open URL", e)
-                Toast.makeText(context, "Cannot open URL", Toast.LENGTH_SHORT).show()
+                Log.e(TAG, "Failed to open player", e)
+                showToast("Failed to open player: ${e.message}")
             }
         }
     }
 
-    @JavascriptInterface
-    fun getDeviceInfo(): String {
-        val deviceInfo = JSONObject().apply {
-            put("model", Build.MODEL)
-            put("manufacturer", Build.MANUFACTURER)
-            put("androidVersion", Build.VERSION.RELEASE)
-            put("sdkVersion", Build.VERSION.SDK_INT)
-        }
-        return deviceInfo.toString()
-    }
-
-    @JavascriptInterface
-    fun setFullscreen(enabled: Boolean) {
-        Log.d(TAG, "Setting fullscreen: $enabled")
-        (context as? Activity)?.runOnUiThread {
-            val window = (context as? Activity)?.window
-            if (enabled) {
-                window?.decorView?.systemUiVisibility = (
-                    View.SYSTEM_UI_FLAG_FULLSCREEN
-                    or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                    or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                )
-            } else {
-                window?.decorView?.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
-            }
-        }
-    }
-
-    @JavascriptInterface
-    fun vibrate(duration: Int) {
-        Log.d(TAG, "Vibrating for ${duration}ms")
-        (context as? Activity)?.runOnUiThread {
-            val vibrator = ContextCompat.getSystemService(context, Vibrator::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrator?.vibrate(VibrationEffect.createOneShot(duration.toLong(), VibrationEffect.DEFAULT_AMPLITUDE))
-            } else {
-                @Suppress("DEPRECATION")
-                vibrator?.vibrate(duration.toLong())
-            }
-        }
-    }
-    
+    /**
+     * Opens the Stremio in-app player with metadata IDs.
+     * JavaScript usage: window.Android.openPlayer("streamUrl", "metaId", "videoId");
+     * 
+     * Called by bridge.js when launching playback from the web UI.
+     * The metaId and videoId are used for tracking and skip intro functionality.
+     */
     @JavascriptInterface
     fun openPlayer(streamUrl: String, metaId: String, videoId: String) {
-        Log.d(TAG, "Open player: $streamUrl")
-        (context as? Activity)?.runOnUiThread {
-            val intent = android.content.Intent(context, PlayerActivity::class.java).apply {
-                putExtra(PlayerActivity.EXTRA_STREAM_URL, streamUrl)
-                putExtra("metaId", metaId)
-                putExtra("videoId", videoId)
-            }
-            context.startActivity(intent)
-        }
-    }
-    
-    @JavascriptInterface
-    fun openExternalPlayer(streamUrl: String) {
-        Log.d(TAG, "Open external player: $streamUrl")
-        (context as? Activity)?.runOnUiThread {
-            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
-                setDataAndType(android.net.Uri.parse(streamUrl), "video/*")
-            }
-            context.startActivity(intent)
-        }
-    }
-    
-    @JavascriptInterface
-    fun shareUrl(url: String) {
-        Log.d(TAG, "Share URL: $url")
-        (context as? Activity)?.runOnUiThread {
-            val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                type = "text/plain"
-                putExtra(android.content.Intent.EXTRA_TEXT, url)
-            }
-            context.startActivity(android.content.Intent.createChooser(intent, "Share via"))
-        }
-    }
-    
-    @JavascriptInterface
-    fun copyToClipboard(text: String) {
-        Log.d(TAG, "Copy to clipboard: $text")
-        val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-        val clip = android.content.ClipData.newPlainText("Stremio", text)
-        clipboard.setPrimaryClip(clip)
-        showToast("Copied to clipboard")
-    }
-    
-    @JavascriptInterface
-    fun openUrl(url: String) {
-        Log.d(TAG, "Open URL: $url")
-        (context as? Activity)?.runOnUiThread {
-            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
-            context.startActivity(intent)
-        }
-    }
-    
-    @JavascriptInterface
-    fun getDeviceInfo(): String {
-        return org.json.JSONObject().apply {
-            put("platform", "android")
-            put("model", android.os.Build.MODEL)
-            put("version", android.os.Build.VERSION.RELEASE)
-        }.toString()
-    }
-    
-    @JavascriptInterface
-    fun setFullscreen(enabled: Boolean) {
-        Log.d(TAG, "Set fullscreen: $enabled")
-        (context as? Activity)?.runOnUiThread {
-            if (enabled) {
-                (context as? Activity)?.window?.decorView?.systemUiVisibility = (
-                    android.view.View.SYSTEM_UI_FLAG_FULLSCREEN or
-                    android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
-                    android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                )
-            } else {
-                (context as? Activity)?.window?.decorView?.systemUiVisibility = android.view.View.SYSTEM_UI_FLAG_VISIBLE
-            }
-        }
-    }
-    
-    @JavascriptInterface
-    fun vibrate(durationMs: Int) {
-        val vibrator = context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as android.os.Vibrator
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            vibrator.vibrate(android.os.VibrationEffect.createOneShot(durationMs.toLong(), android.os.VibrationEffect.DEFAULT_AMPLITUDE))
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator.vibrate(durationMs.toLong())
-        }
-    }
-    }
-    
-    @JavascriptInterface
-    fun openPlayer(streamUrl: String, metaId: String, videoId: String) {
-        Log.d(TAG, "openPlayer: stream=$streamUrl, meta=$metaId, video=$videoId")
+        Log.d(TAG, "openPlayer (3-arg): stream=$streamUrl, meta=$metaId, video=$videoId")
         (context as? Activity)?.runOnUiThread {
             try {
                 val intent = Intent(context, PlayerActivity::class.java).apply {
@@ -288,10 +151,14 @@ class WebAppInterface(private val context: Context) {
             }
         }
     }
-    
+
+    /**
+     * Opens an external video player on the device for a given stream URL.
+     * JavaScript usage: window.Android.openExternalPlayer("streamUrl");
+     */
     @JavascriptInterface
     fun openExternalPlayer(streamUrl: String) {
-        Log.d(TAG, "openExternalPlayer: $streamUrl")
+        Log.d(TAG, "Opening external player: $streamUrl")
         (context as? Activity)?.runOnUiThread {
             try {
                 val intent = Intent(Intent.ACTION_VIEW).apply {
@@ -305,10 +172,14 @@ class WebAppInterface(private val context: Context) {
             }
         }
     }
-    
+
+    /**
+     * Shares a given URL using the device's standard sharing mechanism.
+     * JavaScript usage: window.Android.shareUrl("http://example.com");
+     */
     @JavascriptInterface
     fun shareUrl(url: String) {
-        Log.d(TAG, "shareUrl: $url")
+        Log.d(TAG, "Sharing URL: $url")
         (context as? Activity)?.runOnUiThread {
             try {
                 val intent = Intent(Intent.ACTION_SEND).apply {
@@ -322,10 +193,14 @@ class WebAppInterface(private val context: Context) {
             }
         }
     }
-    
+
+    /**
+     * Copies the provided text to the device's clipboard.
+     * JavaScript usage: window.Android.copyToClipboard("Text to copy");
+     */
     @JavascriptInterface
     fun copyToClipboard(text: String) {
-        Log.d(TAG, "copyToClipboard: $text")
+        Log.d(TAG, "Copying to clipboard")
         (context as? Activity)?.runOnUiThread {
             try {
                 val clipboard = ContextCompat.getSystemService(context, ClipboardManager::class.java)
@@ -338,10 +213,14 @@ class WebAppInterface(private val context: Context) {
             }
         }
     }
-    
+
+    /**
+     * Opens a given URL in the device's default web browser.
+     * JavaScript usage: window.Android.openUrl("http://example.com");
+     */
     @JavascriptInterface
     fun openUrl(url: String) {
-        Log.d(TAG, "openUrl: $url")
+        Log.d(TAG, "Opening URL: $url")
         (context as? Activity)?.runOnUiThread {
             try {
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
@@ -352,7 +231,11 @@ class WebAppInterface(private val context: Context) {
             }
         }
     }
-    
+
+    /**
+     * Retrieves device information such as model, manufacturer, and Android version.
+     * JavaScript usage: const deviceInfo = JSON.parse(window.Android.getDeviceInfo());
+     */
     @JavascriptInterface
     fun getDeviceInfo(): String {
         return try {
@@ -369,10 +252,14 @@ class WebAppInterface(private val context: Context) {
             "{\"error\":\"${e.message}\"}"
         }
     }
-    
+
+    /**
+     * Sets the fullscreen mode for the activity window.
+     * JavaScript usage: window.Android.setFullscreen(true);
+     */
     @JavascriptInterface
     fun setFullscreen(enabled: Boolean) {
-        Log.d(TAG, "setFullscreen: $enabled")
+        Log.d(TAG, "Setting fullscreen: $enabled")
         (context as? Activity)?.runOnUiThread {
             try {
                 val activity = context as? Activity
@@ -388,10 +275,14 @@ class WebAppInterface(private val context: Context) {
             }
         }
     }
-    
+
+    /**
+     * Vibrates the device for a specified duration.
+     * JavaScript usage: window.Android.vibrate(500);
+     */
     @JavascriptInterface
     fun vibrate(durationMs: Int) {
-        Log.d(TAG, "vibrate: ${durationMs}ms")
+        Log.d(TAG, "Vibrating for ${durationMs}ms")
         (context as? Activity)?.runOnUiThread {
             try {
                 val vibrator = ContextCompat.getSystemService(context, Vibrator::class.java)
@@ -408,10 +299,18 @@ class WebAppInterface(private val context: Context) {
             }
         }
     }
-    
+
+    /**
+     * Returns the platform identifier.
+     * JavaScript usage: const platform = window.Android.getPlatform();
+     */
     @JavascriptInterface
     fun getPlatform(): String = "android"
-    
+
+    /**
+     * Returns the current version of the application.
+     * JavaScript usage: const version = window.Android.getVersion();
+     */
     @JavascriptInterface
     fun getVersion(): String = "1.0.0"
 }

@@ -2,39 +2,54 @@ package com.stremio.app
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.webkit.*
 import androidx.appcompat.app.AppCompatActivity
+import android.util.Log
 
+/**
+ * MainActivity - Entry point for Stremio Android application
+ *
+ * This activity hosts a WebView that loads the Stremio Web UI and bridges
+ * communication between the JavaScript frontend and the native Rust core.
+ *
+ * Architecture:
+ * - WebView loads Stremio Web UI from app/src/main/assets/web/
+ * - JavaScript Bridge (WebAppInterface) enables JS ↔ Native communication
+ * - StremioCore manages the Rust core library and addon synchronization
+ * - User authentication syncs addons from Stremio API (account-based, not device-based)
+ */
 class MainActivity : AppCompatActivity() {
 
     companion object {
-        private const val TAG = "MainActivityRouter"
+        private const val TAG = "MainActivity"
     }
 
+    private lateinit var webView: WebView
+
+    /**
+     * Initializes the activity, sets up WebView and loads Stremio Web UI
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Enable WebView debugging in debug builds
         if (BuildConfig.DEBUG) {
             WebView.setWebContentsDebuggingEnabled(true)
             Log.d(TAG, "WebView debugging enabled")
         }
 
-        // Initialize StremioCore native library
-        if (StremioCore.initCore()) {
+        if (StremioCore.initialize(this)) {
             Log.d(TAG, "StremioCore initialized successfully")
         } else {
-            Log.e(TAG, "Failed to initialize StremioCore - continuing without native core")
+            Log.w(TAG, "StremioCore running in fallback mode (no native library)")
         }
 
         setContentView(R.layout.activity_main)
 
         webView = findViewById(R.id.webView)
-        setupWebView()
-        // injectBridgeSetup() // This function is now handled within onPageFinished
 
-        // Log WebView info for debugging
+        setupWebView()
+        loadStremioWeb()
+
         Log.d(TAG, "WebView version: ${getWebViewVersion()}")
     }
 
@@ -45,9 +60,18 @@ class MainActivity : AppCompatActivity() {
         Log.i(TAG, "MainActivity destroyed, StremioCore shutdown")
     }
 
-    // Placeholder for WebView initialization and bridge setup
-    private lateinit var webView: WebView
-
+    /**
+     * Configures WebView settings and establishes JavaScript bridge
+     *
+     * Settings enabled:
+     * - JavaScript execution (required for Stremio Web)
+     * - DOM storage (for web app state persistence)
+     * - Database access (for IndexedDB/localStorage)
+     * - File access (for loading local web assets)
+     *
+     * The JavaScript interface "Android" is exposed to the web context,
+     * allowing the Stremio Web UI to call native Android methods.
+     */
     private fun setupWebView() {
         webView.settings.apply {
             javaScriptEnabled = true
@@ -60,7 +84,6 @@ class MainActivity : AppCompatActivity() {
             mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
         }
 
-        // Add JavaScript interface BEFORE loading the page
         webView.addJavascriptInterface(WebAppInterface(this), "Android")
 
         webView.webViewClient = object : WebViewClient() {
@@ -73,7 +96,6 @@ class MainActivity : AppCompatActivity() {
                 super.onPageFinished(view, url)
                 Log.d(TAG, "Page loaded: $url")
 
-                // Initialize the bridge after page loads
                 view?.evaluateJavascript(
                     """
                     if (window.StremioBridge) {
@@ -107,27 +129,28 @@ class MainActivity : AppCompatActivity() {
                 return true
             }
         }
+    }
 
-        // Load the web interface
-        Log.d(TAG, "Loading web interface...")
+    /**
+     * Loads the Stremio Web UI from local assets
+     *
+     * The web UI is bundled in app/src/main/assets/web/ and includes:
+     * - index.html - Main entry point
+     * - scripts/bridge.js - JavaScript bridge initialization
+     * - scripts/main.js - Stremio Web application code
+     * - binaries/stremio_core_web_bg.wasm - Rust core compiled to WebAssembly
+     *
+     * Once loaded, the web UI will attempt to authenticate and sync addons
+     * from the user's Stremio account (addons are account-based, not device-based)
+     */
+    private fun loadStremioWeb() {
         webView.loadUrl("file:///android_asset/web/index.html")
     }
 
-    // This function is now called by the JavaScript bridge setup
     fun onBridgeReady() {
         Log.i(TAG, "Stremio Bridge is ready and initialized")
         runOnUiThread {
-            // Bridge is ready, web app should now be functional
         }
-    }
-
-    private fun openPlayer(streamUrl: String, title: String) {
-        Log.d(TAG, "Opening player for: $title with URL: $streamUrl")
-        val intent = Intent(this, PlayerActivity::class.java).apply {
-            putExtra(PlayerActivity.EXTRA_STREAM_URL, streamUrl)
-            putExtra(PlayerActivity.EXTRA_TITLE, title)
-        }
-        startActivity(intent)
     }
 
     fun navigateToPath(path: String) {
@@ -140,6 +163,14 @@ class MainActivity : AppCompatActivity() {
             """.trimIndent()
         ) { result ->
             Log.d(TAG, "Navigation result: $result")
+        }
+    }
+
+    private fun getWebViewVersion(): String {
+        return try {
+            WebView(this).settings.userAgentString
+        } catch (e: Exception) {
+            "Unknown"
         }
     }
 }

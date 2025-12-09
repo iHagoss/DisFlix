@@ -73,8 +73,6 @@ Thumbs.db
 .local/
 .upm/
 .config/
-.replit
-replit.nix
 
 # Test output
 *.gcov

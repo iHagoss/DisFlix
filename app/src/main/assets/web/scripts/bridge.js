@@ -242,8 +242,14 @@
     };
 
     // Notify Android that bridge is ready
-    if (window.Android && window.Android.log) {
-        window.Android.log('[Bridge] Stremio Bridge initialized and ready');
+    if (window.Android) {
+        if (window.Android.log) {
+            window.Android.log('[Bridge] Stremio Bridge initialized and ready');
+        }
+        // Notify MainActivity that the bridge is ready for communication
+        if (window.Android.onBridgeReady) {
+            window.Android.onBridgeReady();
+        }
     }
 
     console.log('[Bridge] Stremio Bridge initialized');

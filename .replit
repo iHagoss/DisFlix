@@ -1,0 +1,49 @@
+modules = ["java-graalvm22.3", "nodejs-20", "python-3.11"]
+[nix]
+channel = "stable-25_05"
+packages = ["android-tools", "pnpn", "temurin-bin-17", "unzip", "wget", "zip"]
+
+[agent]
+expertMode = true
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Download Server"
+
+[[workflows.workflow]]
+name = "Download Server"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python server/app.py"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[userenv]
+
+[userenv.shared]
+ANDROID_HOME = "/home/runner/android-sdk"
+ANDROID_SDK_ROOT = "/home/runner/android-sdk"
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[[ports]]
+localPort = 40361
+externalPort = 3000
+
+[[ports]]
+localPort = 41721
+externalPort = 3001

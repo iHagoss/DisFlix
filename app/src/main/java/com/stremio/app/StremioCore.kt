@@ -5,6 +5,22 @@ import android.util.Log
 import org.json.JSONObject
 import org.json.JSONArray
 
+/**
+ * StremioCore - Native interface to the Rust core library
+ *
+ * This class manages the Stremio core library (written in Rust) which handles:
+ * - User authentication with Stremio API (api.strem.io)
+ * - Addon synchronization (account-based, syncs across all devices)
+ * - Library management and metadata fetching
+ * - Stream resolution and torrent handling
+ *
+ * IMPORTANT: Addons in Stremio are tied to user accounts, NOT devices.
+ * When a user signs in, their addon configuration is automatically pulled
+ * from the Stremio API and synchronized across all logged-in devices.
+ *
+ * The Rust core is compiled as a native library (libstremio_core_android.so)
+ * and loaded via JNI (Java Native Interface).
+ */
 object StremioCore {
     private const val TAG = "StremioCore"
     private var isLoaded = false
@@ -23,12 +39,29 @@ object StremioCore {
         }
     }
 
+    /**
+     * Initialize the Stremio Core runtime
+     * This sets up:
+     * - Storage directories for cache and user data
+     * - Network client for API communication
+     * - Event dispatcher for core ↔ UI communication
+     *
+     * @param context Android context
+     * @return Boolean indicating success or failure of initialization
+     */
     fun initCore(context: Context): Boolean = initialize(context)
 
+    /**
+     * Dispatches a "skip intro" action to the core.
+     */
     fun dispatchSkipIntro() {
         dispatchAction("skipIntro", "{}")
     }
 
+    /**
+     * Checks if the native Stremio core library has been loaded.
+     * @return True if the library is loaded, false otherwise.
+     */
     fun isLibraryLoaded(): Boolean = isLoaded
 
     // Native method declarations (will be implemented via JNI when stremio-core-kotlin is built)
