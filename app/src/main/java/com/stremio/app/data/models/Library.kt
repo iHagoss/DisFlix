@@ -52,10 +52,12 @@ data class LibraryItemState(
     @SerializedName("overallTimeWatched")
     val overallTimeWatched: Long = 0,
     val duration: Long = 0,
-    val video: String? = null,
+    @SerializedName("video_id")
+    val videoId: String? = null,
     @SerializedName("flaggedWatched")
     val flaggedWatched: Int = 0,
-    val times: Int = 0,
+    @SerializedName("timesWatched")
+    val timesWatched: Int = 0,
     val watched: WatchedBitfield? = null,
     @SerializedName("noNotif")
     val noNotification: Boolean = false

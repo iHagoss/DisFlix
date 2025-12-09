@@ -2,9 +2,13 @@ package com.stremio.app.addon
 
 import android.content.Context
 import android.util.Log
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.stremio.app.api.ApiClient
+import com.stremio.app.api.AddonCollectionRequest
 import com.stremio.app.api.OfficialAddons
 import com.stremio.app.data.models.*
+import com.stremio.app.data.repository.AuthRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -17,69 +21,159 @@ class AddonManager(private val context: Context) {
         private const val TAG = "AddonManager"
         private const val PREFS_NAME = "stremio_addons"
         private const val KEY_INSTALLED_ADDONS = "installed_addons"
+        private const val KEY_ADDON_MANIFESTS = "addon_manifests"
     }
     
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private val gson = Gson()
     private val installedAddons = mutableListOf<Addon>()
     private val addonCache = mutableMapOf<String, Addon>()
     
+    private var authRepository: AuthRepository? = null
+    
+    fun setAuthRepository(authRepository: AuthRepository) {
+        this.authRepository = authRepository
+    }
+    
     suspend fun initialize() {
         withContext(Dispatchers.IO) {
-            loadInstalledAddons()
-            if (installedAddons.isEmpty()) {
-                installDefaultAddons()
+            loadCachedAddons()
+            
+            val auth = authRepository
+            if (auth != null && auth.isLoggedIn) {
+                try {
+                    syncAddonsFromServer()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to sync addons from server", e)
+                    if (installedAddons.isEmpty()) {
+                        installDefaultAddons()
+                    }
+                }
+            } else {
+                if (installedAddons.isEmpty()) {
+                    installDefaultAddons()
+                }
             }
+            
+            Log.d(TAG, "AddonManager initialized with ${installedAddons.size} addons")
         }
     }
     
-    private suspend fun loadInstalledAddons() {
-        val savedAddons = prefs.getStringSet(KEY_INSTALLED_ADDONS, emptySet()) ?: emptySet()
-        for (url in savedAddons) {
+    private fun loadCachedAddons() {
+        try {
+            val manifestsJson = prefs.getString(KEY_ADDON_MANIFESTS, null)
+            if (manifestsJson != null) {
+                val type = object : TypeToken<List<Addon>>() {}.type
+                val addons: List<Addon> = gson.fromJson(manifestsJson, type)
+                installedAddons.clear()
+                installedAddons.addAll(addons)
+                addons.forEach { addonCache[it.manifest.id] = it }
+                Log.d(TAG, "Loaded ${addons.size} cached addons")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to load cached addons", e)
+        }
+    }
+    
+    private fun saveAddonsToCache() {
+        try {
+            val manifestsJson = gson.toJson(installedAddons)
+            prefs.edit().putString(KEY_ADDON_MANIFESTS, manifestsJson).apply()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to save addons to cache", e)
+        }
+    }
+    
+    suspend fun syncAddonsFromServer(): Result<List<Addon>> {
+        return withContext(Dispatchers.IO) {
             try {
-                val addon = fetchAddon(url)
-                if (addon != null) {
-                    installedAddons.add(addon)
-                    addonCache[addon.manifest.id] = addon
+                val authKey = authRepository?.authKey
+                    ?: return@withContext Result.failure(Exception("Not logged in"))
+                
+                Log.d(TAG, "Syncing addons from server...")
+                
+                val response = ApiClient.stremioApi.getAddonCollection(
+                    AddonCollectionRequest(authKey = authKey, update = true)
+                )
+                
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.error != null) {
+                        Log.e(TAG, "API error: ${body.error.message}")
+                        return@withContext Result.failure(Exception(body.error.message))
+                    }
+                    
+                    val serverAddons = body?.result?.addons ?: emptyList()
+                    Log.d(TAG, "Received ${serverAddons.size} addons from server")
+                    
+                    if (serverAddons.isNotEmpty()) {
+                        installedAddons.clear()
+                        addonCache.clear()
+                        
+                        for (addon in serverAddons) {
+                            installedAddons.add(addon)
+                            addonCache[addon.manifest.id] = addon
+                        }
+                        
+                        saveAddonsToCache()
+                    } else {
+                        installDefaultAddons()
+                    }
+                    
+                    Result.success(installedAddons.toList())
+                } else {
+                    Log.e(TAG, "Sync failed: ${response.code()}")
+                    Result.failure(Exception("Failed to sync addons: ${response.code()}"))
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to load addon: $url", e)
+                Log.e(TAG, "Sync addons error", e)
+                Result.failure(e)
             }
         }
     }
     
     private suspend fun installDefaultAddons() {
+        Log.d(TAG, "Installing default addons...")
         for (addonInfo in OfficialAddons.defaults) {
             try {
                 val addon = fetchAddon(addonInfo.url)
-                if (addon != null) {
+                if (addon != null && installedAddons.none { it.manifest.id == addon.manifest.id }) {
                     installedAddons.add(addon)
                     addonCache[addon.manifest.id] = addon
+                    Log.d(TAG, "Installed default addon: ${addon.manifest.name}")
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to install default addon: ${addonInfo.name}", e)
             }
         }
-        saveInstalledAddons()
+        saveAddonsToCache()
     }
     
     suspend fun fetchAddon(manifestUrl: String): Addon? {
         return withContext(Dispatchers.IO) {
             try {
-                val baseUrl = manifestUrl.removeSuffix("/manifest.json")
+                val baseUrl = if (manifestUrl.endsWith("/manifest.json")) {
+                    manifestUrl.removeSuffix("/manifest.json")
+                } else {
+                    manifestUrl.removeSuffix("/")
+                }
+                
                 val api = ApiClient.createAddonApi(baseUrl)
                 val response = api.getManifest()
                 
                 if (response.isSuccessful && response.body() != null) {
                     val manifest = response.body()!!
-                    Addon(
+                    val addon = Addon(
                         manifest = manifest,
                         transportUrl = baseUrl,
                         flags = AddonFlags(
                             official = OfficialAddons.defaults.any { it.id == manifest.id }
                         )
                     )
+                    Log.d(TAG, "Fetched addon: ${manifest.name} (${manifest.id})")
+                    addon
                 } else {
-                    Log.e(TAG, "Failed to fetch addon: ${response.code()}")
+                    Log.e(TAG, "Failed to fetch addon from $manifestUrl: ${response.code()}")
                     null
                 }
             } catch (e: Exception) {
@@ -95,7 +189,21 @@ class AddonManager(private val context: Context) {
         if (installedAddons.none { it.manifest.id == addon.manifest.id }) {
             installedAddons.add(addon)
             addonCache[addon.manifest.id] = addon
-            saveInstalledAddons()
+            saveAddonsToCache()
+            
+            authRepository?.authKey?.let { authKey ->
+                try {
+                    ApiClient.stremioApi.setAddonCollection(
+                        com.stremio.app.api.SetAddonCollectionRequest(
+                            authKey = authKey,
+                            addons = installedAddons
+                        )
+                    )
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to sync addon to server", e)
+                }
+            }
+            
             return true
         }
         return false
@@ -105,14 +213,9 @@ class AddonManager(private val context: Context) {
         val removed = installedAddons.removeAll { it.manifest.id == addonId }
         if (removed) {
             addonCache.remove(addonId)
-            saveInstalledAddons()
+            saveAddonsToCache()
         }
         return removed
-    }
-    
-    private fun saveInstalledAddons() {
-        val urls = installedAddons.map { "${it.transportUrl}/manifest.json" }.toSet()
-        prefs.edit().putStringSet(KEY_INSTALLED_ADDONS, urls).apply()
     }
     
     fun getInstalledAddons(): List<Addon> = installedAddons.toList()
@@ -162,7 +265,14 @@ class AddonManager(private val context: Context) {
                     else -> api.getCatalog(catalog.type, catalog.id)
                 }
                 
-                if (response.isSuccessful) response.body() else null
+                if (response.isSuccessful) {
+                    val result = response.body()
+                    Log.d(TAG, "Catalog ${catalog.id}: ${result?.metas?.size ?: 0} items")
+                    result
+                } else {
+                    Log.e(TAG, "Failed to get catalog ${catalog.id}: ${response.code()}")
+                    null
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Error fetching catalog", e)
                 null

@@ -1,5 +1,6 @@
 package com.stremio.app.api
 
+import com.google.gson.annotations.SerializedName
 import com.stremio.app.data.models.*
 import retrofit2.Response
 import retrofit2.http.*
@@ -7,25 +8,25 @@ import retrofit2.http.*
 interface StremioApi {
     
     @POST("login")
-    suspend fun login(@Body request: LoginRequest): Response<AuthResponse>
+    suspend fun login(@Body request: AuthPayload.Login): Response<AuthResponse>
     
     @POST("register")
-    suspend fun register(@Body request: RegisterRequest): Response<AuthResponse>
+    suspend fun register(@Body request: AuthPayload.Register): Response<AuthResponse>
     
     @POST("logout")
-    suspend fun logout(@Body request: LogoutRequest): Response<Unit>
+    suspend fun logout(@Body request: AuthPayload.Logout): Response<SuccessResponse>
     
     @POST("getUser")
     suspend fun getUser(@Body request: GetUserRequest): Response<UserResponse>
     
     @POST("saveUser")
-    suspend fun saveUser(@Body request: SaveUserRequest): Response<Unit>
+    suspend fun saveUser(@Body request: SaveUserPayload): Response<SuccessResponse>
     
     @POST("addonCollectionGet")
     suspend fun getAddonCollection(@Body request: AddonCollectionRequest): Response<AddonCollectionResponse>
     
     @POST("addonCollectionSet")
-    suspend fun setAddonCollection(@Body request: SetAddonCollectionRequest): Response<Unit>
+    suspend fun setAddonCollection(@Body request: SetAddonCollectionRequest): Response<SuccessResponse>
     
     @POST("datastoreMeta")
     suspend fun datastoreMeta(@Body request: DatastoreMetaRequest): Response<DatastoreMetaResponse>
@@ -34,19 +35,16 @@ interface StremioApi {
     suspend fun datastoreGet(@Body request: DatastoreGetRequest): Response<DatastoreGetResponse>
     
     @POST("datastorePut")
-    suspend fun datastorePut(@Body request: DatastorePutRequest): Response<Unit>
-    
-    @POST("getSkipIntro")
-    suspend fun getSkipIntro(@Body request: SkipIntroRequest): Response<SkipIntroResponse>
+    suspend fun datastorePut(@Body request: DatastorePutRequest): Response<SuccessResponse>
     
     @POST("getSkipGaps")
     suspend fun getSkipGaps(@Body request: SkipGapsRequest): Response<SkipGapsResponse>
     
     @POST("seekLog")
-    suspend fun seekLog(@Body request: SeekLogRequest): Response<Unit>
+    suspend fun seekLog(@Body request: SeekLogRequest): Response<SuccessResponse>
     
     @POST("events")
-    suspend fun sendEvents(@Body request: EventsRequest): Response<Unit>
+    suspend fun sendEvents(@Body request: EventsRequest): Response<SuccessResponse>
     
     @POST("getModal")
     suspend fun getModal(@Body request: GetModalRequest): Response<ModalResponse>
@@ -55,40 +53,15 @@ interface StremioApi {
     suspend fun getNotification(@Body request: GetNotificationRequest): Response<NotificationResponse>
 }
 
-data class LoginRequest(
-    val type: String = "Login",
-    val email: String,
-    val password: String,
-    val facebook: Boolean = false
-)
-
-data class RegisterRequest(
-    val type: String = "Register",
-    val email: String,
-    val password: String,
-    val gdprConsent: GDPRConsent
-)
-
-data class LogoutRequest(
-    val type: String = "Logout",
-    val authKey: String
-)
-
 data class GetUserRequest(
     val type: String = "GetUser",
     val authKey: String
 )
 
-data class SaveUserRequest(
-    val type: String = "SaveUser",
-    val authKey: String,
-    val user: User
-)
-
 data class AddonCollectionRequest(
     val type: String = "AddonCollectionGet",
     val authKey: String,
-    val update: Boolean = false
+    val update: Boolean = true
 )
 
 data class SetAddonCollectionRequest(
@@ -106,7 +79,7 @@ data class DatastoreGetRequest(
     val authKey: String,
     val collection: String = "libraryItem",
     val ids: List<String> = emptyList(),
-    val all: Boolean = false
+    val all: Boolean = true
 )
 
 data class DatastorePutRequest(
@@ -115,16 +88,8 @@ data class DatastorePutRequest(
     val changes: List<LibraryItem>
 )
 
-data class SkipIntroRequest(
-    val authKey: String,
-    val osId: String,
-    val itemId: String,
-    val season: Int? = null,
-    val episode: Int? = null,
-    val stHash: String
-)
-
 data class SkipGapsRequest(
+    val type: String = "SkipGaps",
     val authKey: String,
     val osId: String,
     val itemId: String,
@@ -134,6 +99,7 @@ data class SkipGapsRequest(
 )
 
 data class SeekLogRequest(
+    val type: String = "SeekLog",
     val osId: String,
     val itemId: String,
     val season: Int? = null,
@@ -150,15 +116,18 @@ data class SeekLog(
 )
 
 data class EventsRequest(
+    val type: String = "Events",
     val authKey: String,
     val events: List<Map<String, Any>>
 )
 
 data class GetModalRequest(
+    val type: String = "GetModal",
     val date: String
 )
 
 data class GetNotificationRequest(
+    val type: String = "GetNotification",
     val date: String
 )
 
@@ -184,7 +153,7 @@ data class AddonCollectionResponse(
 
 data class AddonCollectionResult(
     val addons: List<Addon>,
-    val lastModified: String?
+    val lastModified: String? = null
 )
 
 data class DatastoreMetaResponse(
@@ -193,8 +162,10 @@ data class DatastoreMetaResponse(
 )
 
 data class DatastoreMeta(
+    @SerializedName("_id")
     val id: String,
-    val mtime: String
+    @SerializedName("mtime")
+    val mtime: Long
 )
 
 data class DatastoreGetResponse(
@@ -202,19 +173,10 @@ data class DatastoreGetResponse(
     val error: ApiError? = null
 )
 
-data class SkipIntroResponse(
-    val result: SkipIntroData? = null,
+data class SuccessResponse(
+    val result: Any? = null,
+    val success: Boolean = true,
     val error: ApiError? = null
-)
-
-data class SkipIntroData(
-    val intro: SkipSegment? = null,
-    val credits: SkipSegment? = null
-)
-
-data class SkipSegment(
-    val start: Long,
-    val end: Long
 )
 
 data class SkipGapsResponse(
@@ -260,6 +222,6 @@ data class NotificationData(
 )
 
 data class ApiError(
-    val code: Int,
+    val code: Int? = null,
     val message: String
 )

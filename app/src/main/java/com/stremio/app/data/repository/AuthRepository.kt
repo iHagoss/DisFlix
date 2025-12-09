@@ -4,11 +4,10 @@ import android.content.Context
 import android.util.Log
 import com.google.gson.Gson
 import com.stremio.app.api.ApiClient
-import com.stremio.app.api.LoginRequest
-import com.stremio.app.api.RegisterRequest
-import com.stremio.app.api.LogoutRequest
+import com.stremio.app.api.AuthPayload
 import com.stremio.app.api.GetUserRequest
 import com.stremio.app.api.AddonCollectionRequest
+import com.stremio.app.api.SaveUserPayload
 import com.stremio.app.data.models.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -42,6 +41,7 @@ class AuthRepository(private val context: Context) {
         return try {
             gson.fromJson(userJson, User::class.java)
         } catch (e: Exception) {
+            Log.e(TAG, "Failed to parse user", e)
             null
         }
     }
@@ -55,6 +55,7 @@ class AuthRepository(private val context: Context) {
                 currentProfile = it
             }
         } catch (e: Exception) {
+            Log.e(TAG, "Failed to parse profile", e)
             null
         }
     }
@@ -62,15 +63,23 @@ class AuthRepository(private val context: Context) {
     suspend fun login(email: String, password: String): Result<Profile> {
         return withContext(Dispatchers.IO) {
             try {
+                Log.d(TAG, "Attempting login for: $email")
+                
                 val response = ApiClient.stremioApi.login(
-                    LoginRequest(email = email, password = password)
+                    AuthPayload.Login(email = email, password = password)
                 )
+                
+                Log.d(TAG, "Login response code: ${response.code()}")
                 
                 if (response.isSuccessful && response.body()?.result != null) {
                     val authResult = response.body()!!.result!!
+                    Log.d(TAG, "Login successful for user: ${authResult.user.email}")
+                    
                     saveAuth(authResult.authKey, authResult.user)
                     
                     val addons = fetchAddons(authResult.authKey)
+                    Log.d(TAG, "Fetched ${addons.size} addons for user")
+                    
                     val profile = Profile(
                         auth = AuthInfo(authResult.authKey, authResult.user.id),
                         user = authResult.user,
@@ -80,7 +89,10 @@ class AuthRepository(private val context: Context) {
                     
                     Result.success(profile)
                 } else {
-                    val error = response.body()?.error?.message ?: "Login failed"
+                    val error = response.body()?.error?.message 
+                        ?: response.errorBody()?.string()
+                        ?: "Login failed"
+                    Log.e(TAG, "Login failed: $error")
                     Result.failure(Exception(error))
                 }
             } catch (e: Exception) {
@@ -94,7 +106,7 @@ class AuthRepository(private val context: Context) {
         return withContext(Dispatchers.IO) {
             try {
                 val response = ApiClient.stremioApi.register(
-                    RegisterRequest(email = email, password = password, gdprConsent = gdprConsent)
+                    AuthPayload.Register(email = email, password = password, gdprConsent = gdprConsent)
                 )
                 
                 if (response.isSuccessful && response.body()?.result != null) {
@@ -125,7 +137,11 @@ class AuthRepository(private val context: Context) {
             try {
                 val currentAuthKey = authKey
                 if (currentAuthKey != null) {
-                    ApiClient.stremioApi.logout(LogoutRequest(authKey = currentAuthKey))
+                    try {
+                        ApiClient.stremioApi.logout(AuthPayload.Logout(authKey = currentAuthKey))
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Logout API call failed", e)
+                    }
                 }
                 clearAuth()
                 Result.success(Unit)
@@ -140,9 +156,12 @@ class AuthRepository(private val context: Context) {
     suspend fun refreshUser(): Result<User> {
         return withContext(Dispatchers.IO) {
             try {
-                val currentAuthKey = authKey ?: return@withContext Result.failure(Exception("Not logged in"))
+                val currentAuthKey = authKey 
+                    ?: return@withContext Result.failure(Exception("Not logged in"))
                 
-                val response = ApiClient.stremioApi.getUser(GetUserRequest(authKey = currentAuthKey))
+                val response = ApiClient.stremioApi.getUser(
+                    GetUserRequest(authKey = currentAuthKey)
+                )
                 
                 if (response.isSuccessful && response.body()?.result != null) {
                     val user = response.body()!!.result!!
@@ -158,15 +177,41 @@ class AuthRepository(private val context: Context) {
         }
     }
     
-    private suspend fun fetchAddons(authKey: String): List<Addon> {
+    suspend fun saveUserProfile(authKey: String, user: User): Result<Unit> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = ApiClient.stremioApi.saveUser(
+                    SaveUserPayload(authKey = authKey, user = user)
+                )
+                
+                if (response.isSuccessful) {
+                    saveUser(user)
+                    Result.success(Unit)
+                } else {
+                    val error = response.body()?.error?.message ?: "Failed to save user"
+                    Result.failure(Exception(error))
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Save user error", e)
+                Result.failure(e)
+            }
+        }
+    }
+    
+    suspend fun fetchAddons(authKey: String): List<Addon> {
         return try {
+            Log.d(TAG, "Fetching addons from server...")
+            
             val response = ApiClient.stremioApi.getAddonCollection(
                 AddonCollectionRequest(authKey = authKey, update = true)
             )
             
             if (response.isSuccessful && response.body()?.result != null) {
-                response.body()!!.result!!.addons
+                val addons = response.body()!!.result!!.addons
+                Log.d(TAG, "Successfully fetched ${addons.size} addons")
+                addons
             } else {
+                Log.e(TAG, "Failed to fetch addons: ${response.code()}")
                 emptyList()
             }
         } catch (e: Exception) {
@@ -176,6 +221,7 @@ class AuthRepository(private val context: Context) {
     }
     
     private fun saveAuth(authKey: String, user: User) {
+        Log.d(TAG, "Saving auth for user: ${user.email}")
         prefs.edit()
             .putString(KEY_AUTH_KEY, authKey)
             .putString(KEY_USER_ID, user.id)
@@ -199,5 +245,6 @@ class AuthRepository(private val context: Context) {
     private fun clearAuth() {
         currentProfile = null
         prefs.edit().clear().apply()
+        Log.d(TAG, "Auth cleared")
     }
 }

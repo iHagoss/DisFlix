@@ -2,6 +2,7 @@ package com.stremio.app
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.Switch
 import android.widget.TextView
@@ -15,6 +16,10 @@ import kotlinx.coroutines.launch
 
 class SettingsActivity : AppCompatActivity() {
     
+    companion object {
+        private const val TAG = "SettingsActivity"
+    }
+    
     private lateinit var userEmailText: TextView
     private lateinit var userStatusText: TextView
     private lateinit var loginButton: Button
@@ -23,8 +28,10 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var hardwareDecodingSwitch: Switch
     private lateinit var bingeWatchingSwitch: Switch
     
-    private val authRepository by lazy { (application as StremioApplication).authRepository }
-    private val libraryRepository by lazy { (application as StremioApplication).libraryRepository }
+    private val app by lazy { application as StremioApplication }
+    private val authRepository by lazy { app.authRepository }
+    private val libraryRepository by lazy { app.libraryRepository }
+    private val addonManager by lazy { app.addonManager }
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,7 +66,7 @@ class SettingsActivity : AppCompatActivity() {
         }
         
         syncLibraryButton.setOnClickListener {
-            syncLibrary()
+            syncAllData()
         }
         
         hardwareDecodingSwitch.setOnCheckedChangeListener { _, isChecked ->
@@ -116,16 +123,53 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
     
-    private fun syncLibrary() {
+    private fun syncAllData() {
         lifecycleScope.launch {
-            Toast.makeText(this@SettingsActivity, "Syncing library...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this@SettingsActivity, "Syncing data...", Toast.LENGTH_SHORT).show()
             
-            val result = libraryRepository.syncLibrary()
+            var hadError = false
+            var errorMessage = ""
             
-            result.onSuccess {
-                Toast.makeText(this@SettingsActivity, "Library synced successfully", Toast.LENGTH_SHORT).show()
-            }.onFailure { error ->
-                Toast.makeText(this@SettingsActivity, "Sync failed: ${error.message}", Toast.LENGTH_LONG).show()
+            try {
+                Log.d(TAG, "Syncing addons...")
+                val addonResult = addonManager.syncAddonsFromServer()
+                addonResult.onSuccess { addons ->
+                    Log.d(TAG, "Synced ${addons.size} addons")
+                }.onFailure { error ->
+                    Log.e(TAG, "Addon sync failed", error)
+                    hadError = true
+                    errorMessage = error.message ?: "Unknown error"
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Addon sync exception", e)
+            }
+            
+            try {
+                Log.d(TAG, "Syncing library...")
+                val libraryResult = libraryRepository.syncLibrary()
+                libraryResult.onSuccess {
+                    Log.d(TAG, "Library sync completed, ${libraryRepository.getItemCount()} items")
+                }.onFailure { error ->
+                    Log.e(TAG, "Library sync failed", error)
+                    hadError = true
+                    errorMessage = error.message ?: "Unknown error"
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Library sync exception", e)
+            }
+            
+            if (hadError) {
+                Toast.makeText(
+                    this@SettingsActivity, 
+                    "Sync completed with errors: $errorMessage", 
+                    Toast.LENGTH_LONG
+                ).show()
+            } else {
+                Toast.makeText(
+                    this@SettingsActivity, 
+                    "All data synced successfully!", 
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }

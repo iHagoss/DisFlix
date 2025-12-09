@@ -101,11 +101,35 @@ class StreamSelectActivity : AppCompatActivity() {
     }
     
     private fun playStream(stream: Stream) {
-        val intent = Intent(this, PlayerActivity::class.java).apply {
-            putExtra(PlayerActivity.EXTRA_STREAM_URL, stream.url ?: stream.externalUrl)
-            putExtra(PlayerActivity.EXTRA_ITEM_ID, metaId)
+        val streamUrl = stream.url ?: stream.externalUrl
+        if (streamUrl.isNullOrEmpty()) {
+            Log.e(TAG, "No stream URL available")
+            return
         }
-        startActivity(intent)
+        
+        val prefs = getSharedPreferences("stremio_settings", MODE_PRIVATE)
+        val useExoPlayer = prefs.getBoolean("use_exoplayer", true)
+        
+        if (stream.ytId != null) {
+            val intent = Intent(this, PlayerActivity::class.java).apply {
+                putExtra(PlayerActivity.EXTRA_YOUTUBE_ID, stream.ytId)
+                putExtra(PlayerActivity.EXTRA_ITEM_ID, metaId)
+            }
+            startActivity(intent)
+        } else if (useExoPlayer) {
+            val intent = Intent(this, ExoPlayerActivity::class.java).apply {
+                putExtra(ExoPlayerActivity.EXTRA_STREAM_URL, streamUrl)
+                putExtra(ExoPlayerActivity.EXTRA_ITEM_ID, metaId)
+                putExtra(ExoPlayerActivity.EXTRA_ITEM_TITLE, stream.title ?: stream.name)
+            }
+            startActivity(intent)
+        } else {
+            val intent = Intent(this, PlayerActivity::class.java).apply {
+                putExtra(PlayerActivity.EXTRA_STREAM_URL, streamUrl)
+                putExtra(PlayerActivity.EXTRA_ITEM_ID, metaId)
+            }
+            startActivity(intent)
+        }
     }
     
     private inner class StreamAdapter(

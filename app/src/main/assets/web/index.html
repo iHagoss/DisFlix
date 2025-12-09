@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=0,user-scalable=no,viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Stremio">
+    <link rel="icon" type="image/x-icon" href="favicons/favicon.ico">
+    <title>Stremio - Freedom to Stream</title>
+    <link href="./styles/main.css" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <div style="display: flex; align-items: center; justify-content: center; height: 100vh; background: #000;">
+            <div style="text-align: center; color: #fff;">
+                <img src="./images/logo.png" alt="Stremio" style="max-width: 200px; margin-bottom: 20px;">
+                <p>Loading Stremio...</p>
+            </div>
+        </div>
+    </div>
+    <!-- Load bridge first, before main app -->
+    <script>
+        console.log('[Init] Starting Stremio...');
+        console.log('[Init] Android interface available:', typeof Android !== 'undefined');
+    </script>
+    <script src="./scripts/bridge.js"></script>
+    <script src="./scripts/main.js"></script>
+</body>
+</html>

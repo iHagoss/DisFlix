@@ -1,0 +1,50 @@
+{
+  "version": "1.0.0",
+  "official_addons": [
+    {
+      "id": "com.stremio.cinemeta",
+      "name": "Cinemeta",
+      "description": "The official addon for movie and TV show metadata",
+      "transportUrl": "https://v3-cinemeta.strem.io/manifest.json",
+      "types": ["movie", "series"],
+      "catalogs": ["top", "movie", "series"],
+      "official": true,
+      "required": true
+    },
+    {
+      "id": "com.stremio.watchhub",
+      "name": "WatchHub",
+      "description": "Browse and search for movies and TV shows across streaming services",
+      "transportUrl": "https://watchhub.strem.io/manifest.json",
+      "types": ["movie", "series"],
+      "catalogs": ["watchhub"],
+      "official": true,
+      "required": false
+    },
+    {
+      "id": "com.stremio.opensubtitles",
+      "name": "OpenSubtitles",
+      "description": "Subtitles from OpenSubtitles.org",
+      "transportUrl": "https://opensubtitles-v3.strem.io/manifest.json",
+      "types": ["movie", "series"],
+      "catalogs": [],
+      "resources": ["subtitles"],
+      "official": true,
+      "required": false
+    },
+    {
+      "id": "com.stremio.local-files",
+      "name": "Local Files",
+      "description": "Access your local media files",
+      "transportUrl": "stremio://local-files",
+      "types": ["movie", "series", "other"],
+      "catalogs": ["local"],
+      "official": true,
+      "required": false
+    }
+  ],
+  "community_addon_sources": [
+    "https://stremio-addons.net/catalog.json",
+    "https://api.strem.io/addonscollection.json"
+  ]
+}

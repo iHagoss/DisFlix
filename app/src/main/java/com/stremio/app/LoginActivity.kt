@@ -24,7 +24,8 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var skipButton: TextView
     private lateinit var progressBar: ProgressBar
     
-    private val authRepository by lazy { (application as StremioApplication).authRepository }
+    private val app by lazy { application as StremioApplication }
+    private val authRepository by lazy { app.authRepository }
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -79,8 +80,11 @@ class LoginActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val result = authRepository.login(email, password)
             
-            result.onSuccess {
+            result.onSuccess { profile ->
                 Toast.makeText(this@LoginActivity, "Welcome back!", Toast.LENGTH_SHORT).show()
+                
+                app.reinitialize()
+                
                 navigateToDiscover()
             }.onFailure { error ->
                 setLoading(false)
@@ -104,6 +108,9 @@ class LoginActivity : AppCompatActivity() {
             
             result.onSuccess {
                 Toast.makeText(this@LoginActivity, "Account created successfully!", Toast.LENGTH_SHORT).show()
+                
+                app.reinitialize()
+                
                 navigateToDiscover()
             }.onFailure { error ->
                 setLoading(false)

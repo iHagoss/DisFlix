@@ -44,6 +44,8 @@ class StremioApplication : Application() {
         libraryRepository = LibraryRepository(this, authRepository)
         addonManager = AddonManager(this)
         
+        addonManager.setAuthRepository(authRepository)
+        
         applicationScope.launch {
             try {
                 addonManager.initialize()
@@ -58,10 +60,25 @@ class StremioApplication : Application() {
     fun reinitialize() {
         applicationScope.launch {
             try {
-                addonManager.initialize()
-                libraryRepository.initialize()
+                Log.d(TAG, "Reinitializing components after login/logout...")
+                addonManager.syncAddonsFromServer()
+                libraryRepository.syncLibrary()
+                Log.d(TAG, "Reinitialize completed")
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to reinitialize", e)
+            }
+        }
+    }
+    
+    fun syncAllData() {
+        applicationScope.launch {
+            try {
+                Log.d(TAG, "Syncing all data...")
+                addonManager.syncAddonsFromServer()
+                libraryRepository.syncLibrary()
+                Log.d(TAG, "All data synced")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to sync all data", e)
             }
         }
     }

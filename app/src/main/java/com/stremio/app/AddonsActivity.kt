@@ -1,10 +1,12 @@
 package com.stremio.app
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -19,13 +21,19 @@ import kotlinx.coroutines.launch
 
 class AddonsActivity : AppCompatActivity() {
     
+    companion object {
+        private const val TAG = "AddonsActivity"
+    }
+    
     private lateinit var recyclerView: RecyclerView
     private lateinit var progressBar: ProgressBar
     private lateinit var addAddonButton: Button
+    private lateinit var emptyText: TextView
     
     private lateinit var adapter: AddonAdapter
     
-    private val addonManager by lazy { (application as StremioApplication).addonManager }
+    private val app by lazy { application as StremioApplication }
+    private val addonManager by lazy { app.addonManager }
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,8 +48,8 @@ class AddonsActivity : AppCompatActivity() {
         recyclerView = findViewById(R.id.recycler_view)
         progressBar = findViewById(R.id.progress_bar)
         addAddonButton = findViewById(R.id.add_addon_button)
+        emptyText = findViewById(R.id.empty_text)
         
-        // This relies on having a Toolbar defined in R.id.toolbar in activity_addons.xml
         setSupportActionBar(findViewById(R.id.toolbar)) 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "Addons"
@@ -68,14 +76,44 @@ class AddonsActivity : AppCompatActivity() {
     }
     
     private fun loadAddons() {
-        val addons = addonManager.getInstalledAddons()
-        adapter.submitList(addons)
+        progressBar.visibility = View.VISIBLE
+        emptyText.visibility = View.GONE
+        
+        lifecycleScope.launch {
+            try {
+                if (app.authRepository.isLoggedIn) {
+                    Log.d(TAG, "User is logged in, syncing addons from server...")
+                    val result = addonManager.syncAddonsFromServer()
+                    result.onFailure { e ->
+                        Log.e(TAG, "Failed to sync addons from server", e)
+                    }
+                }
+                
+                val addons = addonManager.getInstalledAddons()
+                Log.d(TAG, "Loaded ${addons.size} addons")
+                
+                progressBar.visibility = View.GONE
+                
+                if (addons.isEmpty()) {
+                    emptyText.visibility = View.VISIBLE
+                    emptyText.text = "No addons installed.\nAdd an addon to start browsing content."
+                    recyclerView.visibility = View.GONE
+                } else {
+                    emptyText.visibility = View.GONE
+                    recyclerView.visibility = View.VISIBLE
+                    adapter.submitList(addons)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error loading addons", e)
+                progressBar.visibility = View.GONE
+                Toast.makeText(this@AddonsActivity, "Failed to load addons", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
     
     private fun showAddAddonDialog() {
         val input = EditText(this).apply {
             hint = "Enter addon manifest URL"
-            // Use dimensional resources for padding (e.g., R.dimen.padding_large) for best practice
             setPadding(48, 32, 48, 32) 
         }
         
@@ -115,18 +153,18 @@ class AddonsActivity : AppCompatActivity() {
     private fun showAddonDetails(addon: Addon) {
         val manifest = addon.manifest
         
-        // Using string formatting for a cleaner build
-        val message = """
-            Name: ${manifest.name}
-            ID: ${manifest.id}
-            Version: ${manifest.version}
-            
-            ${manifest.description?.let { "Description: $it\n" } ?: ""}
-            Types: ${manifest.types.joinToString(", ")}
-            Resources: ${manifest.resources.joinToString(", ") { it.name }}
-            
-            Catalogs: ${manifest.catalogs.size}
-        """.trimIndent()
+        val message = buildString {
+            appendLine("Name: ${manifest.name}")
+            appendLine("ID: ${manifest.id}")
+            appendLine("Version: ${manifest.version}")
+            appendLine()
+            manifest.description?.let { appendLine("Description: $it\n") }
+            appendLine("Types: ${manifest.types.joinToString(", ")}")
+            appendLine("Resources: ${manifest.resources.joinToString(", ") { it.name }}")
+            appendLine()
+            appendLine("Catalogs: ${manifest.catalogs.size}")
+            if (addon.flags.official) appendLine("\nOfficial Stremio Addon")
+        }
         
         AlertDialog.Builder(this)
             .setTitle(manifest.name)

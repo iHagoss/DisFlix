@@ -2,10 +2,12 @@ package com.stremio.app
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -17,17 +19,25 @@ import com.stremio.app.StremioApplication
 import com.stremio.app.data.models.DiscoverRow
 import com.stremio.app.data.models.MetaItemPreview
 import com.stremio.app.ui.adapters.DiscoverAdapter
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 
 class DiscoverActivity : AppCompatActivity() {
     
+    companion object {
+        private const val TAG = "DiscoverActivity"
+    }
+    
     private lateinit var recyclerView: RecyclerView
     private lateinit var progressBar: ProgressBar
     private lateinit var bottomNav: BottomNavigationView
+    private lateinit var emptyText: TextView
     
     private lateinit var discoverAdapter: DiscoverAdapter
     
-    private val addonManager by lazy { (application as StremioApplication).addonManager }
+    private val app by lazy { application as StremioApplication }
+    private val addonManager by lazy { app.addonManager }
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,6 +53,7 @@ class DiscoverActivity : AppCompatActivity() {
         recyclerView = findViewById(R.id.recycler_view)
         progressBar = findViewById(R.id.progress_bar)
         bottomNav = findViewById(R.id.bottom_navigation)
+        emptyText = findViewById(R.id.empty_text)
         
         setSupportActionBar(findViewById(R.id.toolbar))
         supportActionBar?.title = "Discover"
@@ -86,45 +97,98 @@ class DiscoverActivity : AppCompatActivity() {
     
     private fun loadDiscoverContent() {
         progressBar.visibility = View.VISIBLE
+        emptyText.visibility = View.GONE
+        recyclerView.visibility = View.GONE
         
         lifecycleScope.launch {
             try {
+                val installedAddons = addonManager.getInstalledAddons()
+                Log.d(TAG, "Installed addons: ${installedAddons.size}")
+                
+                if (installedAddons.isEmpty()) {
+                    Log.d(TAG, "No addons installed, trying to sync...")
+                    addonManager.syncAddonsFromServer()
+                }
+                
                 val rows = mutableListOf<DiscoverRow>()
                 
                 val movieCatalogs = addonManager.getCatalogsForType("movie")
-                for ((addon, catalog) in movieCatalogs.take(3)) {
-                    val response = addonManager.getCatalog(addon, catalog)
-                    if (response != null && response.metas.isNotEmpty()) {
-                        rows.add(DiscoverRow(
-                            title = catalog.name ?: "${addon.manifest.name} - Movies",
-                            items = response.metas,
-                            catalog = catalog,
-                            addon = addon,
-                            deepLink = "stremio:///discover/${addon.manifest.id}/${catalog.type}/${catalog.id}"
-                        ))
+                Log.d(TAG, "Movie catalogs: ${movieCatalogs.size}")
+                
+                val movieRows = movieCatalogs.take(4).map { (addon, catalog) ->
+                    async {
+                        try {
+                            val response = addonManager.getCatalog(addon, catalog)
+                            if (response != null && response.metas.isNotEmpty()) {
+                                Log.d(TAG, "Loaded catalog ${catalog.id}: ${response.metas.size} items")
+                                DiscoverRow(
+                                    title = catalog.name ?: "${addon.manifest.name} - Movies",
+                                    items = response.metas.take(20),
+                                    catalog = catalog,
+                                    addon = addon,
+                                    deepLink = "stremio:///discover/${addon.manifest.id}/${catalog.type}/${catalog.id}"
+                                )
+                            } else {
+                                Log.d(TAG, "Catalog ${catalog.id} returned empty")
+                                null
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error loading catalog ${catalog.id}", e)
+                            null
+                        }
                     }
-                }
+                }.awaitAll().filterNotNull()
+                
+                rows.addAll(movieRows)
                 
                 val seriesCatalogs = addonManager.getCatalogsForType("series")
-                for ((addon, catalog) in seriesCatalogs.take(3)) {
-                    val response = addonManager.getCatalog(addon, catalog)
-                    if (response != null && response.metas.isNotEmpty()) {
-                        rows.add(DiscoverRow(
-                            title = catalog.name ?: "${addon.manifest.name} - Series",
-                            items = response.metas,
-                            catalog = catalog,
-                            addon = addon,
-                            deepLink = "stremio:///discover/${addon.manifest.id}/${catalog.type}/${catalog.id}"
-                        ))
+                Log.d(TAG, "Series catalogs: ${seriesCatalogs.size}")
+                
+                val seriesRows = seriesCatalogs.take(4).map { (addon, catalog) ->
+                    async {
+                        try {
+                            val response = addonManager.getCatalog(addon, catalog)
+                            if (response != null && response.metas.isNotEmpty()) {
+                                Log.d(TAG, "Loaded catalog ${catalog.id}: ${response.metas.size} items")
+                                DiscoverRow(
+                                    title = catalog.name ?: "${addon.manifest.name} - Series",
+                                    items = response.metas.take(20),
+                                    catalog = catalog,
+                                    addon = addon,
+                                    deepLink = "stremio:///discover/${addon.manifest.id}/${catalog.type}/${catalog.id}"
+                                )
+                            } else {
+                                null
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error loading catalog ${catalog.id}", e)
+                            null
+                        }
                     }
+                }.awaitAll().filterNotNull()
+                
+                rows.addAll(seriesRows)
+                
+                Log.d(TAG, "Total discover rows: ${rows.size}")
+                
+                progressBar.visibility = View.GONE
+                
+                if (rows.isEmpty()) {
+                    emptyText.visibility = View.VISIBLE
+                    emptyText.text = "No content available.\nPlease install some addons."
+                    recyclerView.visibility = View.GONE
+                } else {
+                    emptyText.visibility = View.GONE
+                    recyclerView.visibility = View.VISIBLE
+                    discoverAdapter.submitList(rows)
                 }
                 
-                discoverAdapter.submitList(rows)
-                progressBar.visibility = View.GONE
-                
             } catch (e: Exception) {
+                Log.e(TAG, "Failed to load discover content", e)
                 progressBar.visibility = View.GONE
-                Toast.makeText(this@DiscoverActivity, "Failed to load content", Toast.LENGTH_SHORT).show()
+                emptyText.visibility = View.VISIBLE
+                emptyText.text = "Failed to load content.\nPlease try again."
+                Toast.makeText(this@DiscoverActivity, "Failed to load content: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -148,6 +212,10 @@ class DiscoverActivity : AppCompatActivity() {
         return when (item.itemId) {
             R.id.action_search -> {
                 startActivity(Intent(this, SearchActivity::class.java))
+                true
+            }
+            R.id.action_refresh -> {
+                loadDiscoverContent()
                 true
             }
             else -> super.onOptionsItemSelected(item)

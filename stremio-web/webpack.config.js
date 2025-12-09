@@ -184,9 +184,10 @@ module.exports = (env, argv) => ({
     },
     devServer: {
         host: '0.0.0.0',
+        port: 5000,
+        allowedHosts: 'all',
         static: false,
         hot: false,
-        server: 'https',
         liveReload: false
     },
     optimization: {

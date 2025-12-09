@@ -19,6 +19,8 @@ object ApiClient {
     private val gson = GsonBuilder()
         .setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
         .setLenient()
+        .registerTypeAdapterFactory(AuthPayloadTypeAdapterFactory())
+        .registerTypeAdapterFactory(SaveUserPayloadTypeAdapterFactory())
         .create()
     
     private val loggingInterceptor = HttpLoggingInterceptor().apply {

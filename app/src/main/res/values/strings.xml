@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Stremio</string>
+    <string name="app_name">DisFlix</string>
+    <string name="back">Back</string>
+    <string name="play_pause">Play/Pause</string>
+    <string name="play">Play</string>
+    <string name="pause">Pause</string>
+    <string name="loading">Loading...</string>
+    <string name="error_player">Player error occurred</string>
     <string name="app_version">5.0.0</string>
     <string name="stremio_description">Stream movies and series instantly</string>
     <string name="error_no_internet">No internet connection</string>
@@ -11,7 +17,6 @@
     <string name="search">Search</string>
     <string name="library">Library</string>
     <string name="discover">Discover</string>
-    <string name="play">Play</string>
     <string name="poster">Poster</string>
     <string name="skip_intro">Skip Intro</string>
     <string name="login">Login</string>
@@ -20,7 +25,6 @@
     <string name="password">Password</string>
     <string name="addons">Addons</string>
     <string name="streams">Streams</string>
-    <string name="loading">Loading...</string>
     <string name="no_content">No content available</string>
     <string name="player_error">Playback error</string>
     <string name="connecting">Connecting...</string>
@@ -39,34 +43,34 @@
     <string name="label_stremio_tv_settings_frame_rate_matching_disabled">Disabled</string>
     <string name="label_stremio_tv_settings_frame_rate_matching_frame_rate_only">Frame Rate Only</string>
     <string name="label_stremio_tv_settings_frame_rate_matching_frame_rate_and_resolution">Frame Rate and Resolution</string>
-    
+
     <!-- External Player Settings -->
     <string name="label_stremio_tv_settings_external_player">External Player</string>
-    
+
     <!-- Server Settings -->
     <string name="label_server_settings_mode_embedded">Embedded</string>
     <string name="label_server_settings_mode_remote">Remote</string>
-    
+
     <!-- Torrent Profile Settings -->
     <string name="label_torrent_profile_default">Default</string>
     <string name="label_torrent_profile_soft">Soft</string>
     <string name="label_torrent_profile_balanced">Balanced</string>
     <string name="label_torrent_profile_aggressive">Aggressive</string>
-    
+
     <!-- Subtitle Size Settings -->
     <string name="label_stremio_tv_settings_subtitle_size_small">Small</string>
     <string name="label_stremio_tv_settings_subtitle_size_medium">Medium</string>
     <string name="label_stremio_tv_settings_subtitle_size_large">Large</string>
     <string name="label_stremio_tv_settings_subtitle_size_extra_large">Extra Large</string>
-    
+
     <!-- UI Density Settings -->
     <string name="label_stremio_tv_settings_ui_density_comfortable">Comfortable</string>
     <string name="label_stremio_tv_settings_ui_density_compact">Compact</string>
-    
+
     <!-- TV Announcement -->
     <string name="label_stremio_tv_announcement_qr_code">Scan QR Code</string>
     <string name="label_stremio_tv_announcement_close">Close</string>
-    
+
     <!-- Addon strings -->
     <string name="label_install_addon">Install</string>
     <string name="label_stremio_tv_addons_title">Addons</string>

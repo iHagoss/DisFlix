@@ -9,7 +9,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" tools:targetApi="34" /> 
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" tools:targetApi="34" />
 
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
     <uses-feature android:name="android.software.leanback" android:required="false" />
@@ -29,13 +29,13 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.Stremio.Splash" 
-            android:launchMode="singleTask" 
+            android:theme="@style/Theme.Stremio.Splash"
+            android:launchMode="singleTask"
             android:configChanges="orientation|screenSize|keyboard|keyboardHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="android.intent.category.LEANBACK_LAUNCHER" /> 
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -55,16 +55,22 @@
         <activity android:name=".SettingsActivity" android:exported="false" />
         <activity android:name=".StreamSelectActivity" android:exported="false" />
         <activity android:name=".PlayerActivity" android:exported="false" android:configChanges="orientation|screenSize|keyboard|keyboardHidden" android:screenOrientation="sensorLandscape" android:launchMode="singleTask" android:theme="@style/Theme.Stremio.Player" />
+        <activity android:name=".ExoPlayerActivity" android:exported="false" android:configChanges="orientation|screenSize|keyboard|keyboardHidden" android:screenOrientation="sensorLandscape" android:launchMode="singleTask" android:theme="@style/Theme.Stremio.Player" />
 
         <activity android:name=".MobileMainActivity" android:exported="false" />
-        
+
         <activity android:name=".TvMainActivity" android:exported="false" android:screenOrientation="landscape" android:theme="@style/Theme.Stremio.Leanback" />
         <activity android:name=".TvDetailActivity" android:exported="false" android:screenOrientation="landscape" android:theme="@style/Theme.Stremio.Leanback" />
         <activity android:name=".TvSearchActivity" android:exported="false" android:screenOrientation="landscape" android:theme="@style/Theme.Stremio.Leanback" />
         <activity android:name=".TvPlayerActivity" android:exported="false" android:screenOrientation="landscape" android:theme="@style/Theme.Stremio.Leanback" />
 
-        <service 
-            android:name=".ServerService" 
+        <activity
+            android:name=".StreamingServerActivity"
+            android:label="Streaming Server"
+            android:theme="@style/Theme.AppCompat" />
+
+        <service
+            android:name=".ServerService"
             android:exported="false"
             android:foregroundServiceType="dataSync"
             tools:targetApi="34" />

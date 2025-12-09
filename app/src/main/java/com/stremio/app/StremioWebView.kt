@@ -1,3 +1,4 @@
+
 package com.stremio.app
 
 import android.content.Context
@@ -7,6 +8,9 @@ import android.webkit.WebChromeClient
 import android.util.Log
 import android.webkit.JavascriptInterface
 import android.webkit.WebSettings
+import android.webkit.ConsoleMessage
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceError
 
 class StremioWebView(context: Context) : WebView(context) {
     companion object {
@@ -16,43 +20,72 @@ class StremioWebView(context: Context) : WebView(context) {
 
     init {
         configureWebView()
-        // The API bridge must be added BEFORE the web page loads.
+        // The API bridge must be added BEFORE the web page loads
         addJavascriptInterface(StremioCoreBridge(), "StremioCore")
+        addJavascriptInterface(StremioNativeAPI(), "Android")
         loadStremioWeb()
     }
 
     // Inner class to bridge JavaScript calls to Kotlin/JNI functions in StremioCore
     private inner class StremioCoreBridge {
         
-        // This annotation is crucial for exposing methods to JavaScript
+        @JavascriptInterface
+        fun isNativeAvailable(): Boolean {
+            return StremioCore.isLibraryLoaded()
+        }
+        
         @JavascriptInterface
         fun getAddons(): String {
+            Log.d(TAG, "JS -> getAddons()")
             return StremioCore.getAddons()
         }
 
         @JavascriptInterface
         fun getLibrary(): String {
+            Log.d(TAG, "JS -> getLibrary()")
             return StremioCore.getLibrary()
         }
 
         @JavascriptInterface
         fun search(query: String): String {
+            Log.d(TAG, "JS -> search($query)")
             return StremioCore.search(query)
         }
 
         @JavascriptInterface
         fun dispatchAction(action: String, payload: String): String {
+            Log.d(TAG, "JS -> dispatchAction($action, ...)")
             return StremioCore.dispatchAction(action, payload)
         }
 
         @JavascriptInterface
         fun getSkipIntroData(itemId: String, duration: Long): String {
+            Log.d(TAG, "JS -> getSkipIntroData($itemId, $duration)")
             return StremioCore.getSkipIntroData(itemId, duration)
         }
         
         @JavascriptInterface
         fun invokeAddon(addonId: String, method: String, args: String): String {
+            Log.d(TAG, "JS -> invokeAddon($addonId, $method, ...)")
             return StremioCore.invokeAddon(addonId, method, args)
+        }
+    }
+    
+    // Native Android API exposed to JavaScript
+    private inner class StremioNativeAPI {
+        @JavascriptInterface
+        fun log(message: String) {
+            Log.d(TAG, "[JS] $message")
+        }
+        
+        @JavascriptInterface
+        fun getPlatform(): String {
+            return "android"
+        }
+        
+        @JavascriptInterface
+        fun getVersion(): String {
+            return "1.0.0"
         }
     }
 
@@ -63,11 +96,17 @@ class StremioWebView(context: Context) : WebView(context) {
             databaseEnabled = true
             mediaPlaybackRequiresUserGesture = false
             allowFileAccess = true
-            // Setting this is vital for web apps loaded via file:///
             allowUniversalAccessFromFileURLs = true 
+            allowFileAccessFromFileURLs = true
             mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-            userAgentString = "Stremio/Android"
+            userAgentString = "Stremio/Android 1.0"
             cacheMode = WebSettings.LOAD_DEFAULT
+            
+            // Enable additional features
+            setGeolocationEnabled(false)
+            setSupportZoom(false)
+            builtInZoomControls = false
+            displayZoomControls = false
         }
 
         webViewClient = object : WebViewClient() {
@@ -82,20 +121,30 @@ class StremioWebView(context: Context) : WebView(context) {
                 injectStremioAPI()
             }
 
-            override fun onReceivedError(view: WebView?, request: android.webkit.WebResourceRequest?, error: android.webkit.WebResourceError?) {
+            override fun onReceivedError(
+                view: WebView?, 
+                request: WebResourceRequest?, 
+                error: WebResourceError?
+            ) {
                 super.onReceivedError(view, request, error)
-                Log.e(TAG, "Web error: ${request?.url} - ${error?.description}")
+                Log.e(TAG, "WebView error: ${request?.url} - ${error?.description}")
             }
         }
 
         webChromeClient = object : WebChromeClient() {
-            override fun onConsoleMessage(consoleMessage: android.webkit.ConsoleMessage?): Boolean {
-                // Allows us to see JS logs in Logcat
-                Log.d(TAG, "[JS Console] ${consoleMessage?.message()}")
+            override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
+                consoleMessage?.let {
+                    Log.d(TAG, "[JS Console] ${it.message()} (${it.sourceId()}:${it.lineNumber()})")
+                }
                 return true
             }
 
-            override fun onJsAlert(view: WebView?, url: String?, message: String?, result: android.webkit.JsResult?): Boolean {
+            override fun onJsAlert(
+                view: WebView?, 
+                url: String?, 
+                message: String?, 
+                result: android.webkit.JsResult?
+            ): Boolean {
                 Log.d(TAG, "[JS Alert] $message")
                 result?.confirm()
                 return true
@@ -114,49 +163,34 @@ class StremioWebView(context: Context) : WebView(context) {
     }
 
     private fun injectStremioAPI() {
-        // The window.StremioCore object is now available globally due to addJavascriptInterface().
-        // We now inject the window.stremioNative object, which wraps the JSON parsing logic.
-        val jsCode = """
+        // Inject additional helper functions into the web context
+        evaluateJavascript("""
             (function() {
-                if (window.StremioCore) {
-                    window.stremioNative = {
-                        getAddons: function() {
-                            return JSON.parse(StremioCore.getAddons());
-                        },
-                        getLibrary: function() {
-                            return JSON.parse(StremioCore.getLibrary());
-                        },
-                        search: function(query) {
-                            return JSON.parse(StremioCore.search(query));
-                        },
-                        dispatchAction: function(action, payload) {
-                            // payload must be stringified before sending to Kotlin bridge
-                            var payloadString = JSON.stringify(payload || {});
-                            var result = StremioCore.dispatchAction(action, payloadString);
-                            return JSON.parse(result);
-                        },
-                        getSkipIntroData: function(itemId, duration) {
-                            return JSON.parse(StremioCore.getSkipIntroData(itemId, duration));
-                        },
-                        invokeAddon: function(addonId, method, args) {
-                            // args is already a JSON string from the web app
-                            return JSON.parse(StremioCore.invokeAddon(addonId, method, args));
-                        }
-                    };
-                    console.log('Stremio Native API injected and ready.');
-                } else {
-                    console.error('StremioCore bridge not found in WebView.');
+                if (window.StremioNativeAPI) {
+                    console.log('[Native] API already initialized');
+                    return;
                 }
+                
+                window.StremioNativeAPI = {
+                    isNativeAvailable: function() {
+                        return typeof window.StremioCore !== 'undefined' && 
+                               window.StremioCore.isNativeAvailable();
+                    },
+                    log: function(message) {
+                        if (window.Android) {
+                            window.Android.log(message);
+                        }
+                    },
+                    getPlatform: function() {
+                        return window.Android ? window.Android.getPlatform() : 'web';
+                    },
+                    getVersion: function() {
+                        return window.Android ? window.Android.getVersion() : '0.0.0';
+                    }
+                };
+                
+                console.log('[Native] StremioNativeAPI initialized');
             })();
-        """.trimIndent()
-        evaluateJavascript(jsCode) { result ->
-            Log.d(TAG, "API injection result: $result")
-        }
+        """.trimIndent(), null)
     }
-
-    // This function is now redundant, as the bridge logic is handled in StremioCoreBridge
-    // and the stremioNative wrapper.
-    // fun injectStremioCore(addonId: String, method: String, args: String) { ... }
-    
-    // We can remove it or leave it commented out. For a clean compile, let's remove it.
 }

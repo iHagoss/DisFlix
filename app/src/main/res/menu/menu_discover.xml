@@ -3,7 +3,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/action_search"
-        android:icon="@drawable/ic_search"
+        android:icon="@drawable/search"
         android:title="Search"
         app:showAsAction="always" />
+    <item
+        android:id="@+id/action_refresh"
+        android:icon="@drawable/reset"
+        android:title="Refresh"
+        app:showAsAction="ifRoom" />
 </menu>

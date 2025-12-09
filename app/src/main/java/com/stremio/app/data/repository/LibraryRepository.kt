@@ -23,6 +23,7 @@ class LibraryRepository(
         private const val PREFS_NAME = "stremio_library"
         private const val KEY_LIBRARY = "library_items"
         private const val KEY_LAST_SYNC = "last_sync"
+        private const val COLLECTION_NAME = "libraryItem"
     }
     
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -35,7 +36,11 @@ class LibraryRepository(
         withContext(Dispatchers.IO) {
             loadLocalLibrary()
             if (authRepository.isLoggedIn) {
-                syncLibrary()
+                try {
+                    syncLibrary()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Initial sync failed", e)
+                }
             }
         }
     }
@@ -48,6 +53,7 @@ class LibraryRepository(
             libraryItems.clear()
             libraryItems.putAll(items)
             lastSyncTime = prefs.getLong(KEY_LAST_SYNC, 0)
+            Log.d(TAG, "Loaded ${libraryItems.size} items from local storage")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to load local library", e)
         }
@@ -63,23 +69,45 @@ class LibraryRepository(
     suspend fun syncLibrary(): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
-                val authKey = authRepository.authKey ?: return@withContext Result.failure(Exception("Not logged in"))
+                val authKey = authRepository.authKey 
+                    ?: return@withContext Result.failure(Exception("Not logged in"))
+                
+                Log.d(TAG, "Starting library sync with authKey: ${authKey.take(10)}...")
                 
                 val response = ApiClient.stremioApi.datastoreGet(
-                    DatastoreGetRequest(authKey = authKey, all = true)
+                    DatastoreGetRequest(
+                        authKey = authKey,
+                        collection = COLLECTION_NAME,
+                        all = true,
+                        ids = emptyList()
+                    )
                 )
                 
-                if (response.isSuccessful && response.body()?.result != null) {
-                    val items = response.body()!!.result!!
+                Log.d(TAG, "Sync response code: ${response.code()}")
+                
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.error != null) {
+                        Log.e(TAG, "API returned error: ${body.error.message}")
+                        return@withContext Result.failure(Exception(body.error.message))
+                    }
+                    
+                    val items = body?.result ?: emptyList()
+                    Log.d(TAG, "Received ${items.size} library items from server")
+                    
                     libraryItems.clear()
                     items.forEach { item ->
                         libraryItems[item.id] = item
                     }
                     lastSyncTime = System.currentTimeMillis()
                     saveLocalLibrary()
+                    
+                    Log.d(TAG, "Library sync completed successfully with ${libraryItems.size} items")
                     Result.success(Unit)
                 } else {
-                    Result.failure(Exception("Failed to sync library"))
+                    val errorBody = response.errorBody()?.string()
+                    Log.e(TAG, "Sync failed with code ${response.code()}: $errorBody")
+                    Result.failure(Exception("Failed to sync library: ${response.code()}"))
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Sync library error", e)
@@ -121,7 +149,8 @@ class LibraryRepository(
     suspend fun removeFromLibrary(itemId: String): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
-                val item = libraryItems[itemId] ?: return@withContext Result.failure(Exception("Item not found"))
+                val item = libraryItems[itemId] 
+                    ?: return@withContext Result.failure(Exception("Item not found"))
                 
                 val removedItem = item.copy(removed = true, modifiedTime = Date())
                 libraryItems[itemId] = removedItem
@@ -156,7 +185,7 @@ class LibraryRepository(
                         lastWatched = now,
                         timeOffset = timeOffset,
                         duration = duration,
-                        video = videoId,
+                        videoId = videoId,
                         timeWatched = (item?.state?.timeWatched ?: 0) + timeOffset,
                         overallTimeWatched = (item?.state?.overallTimeWatched ?: 0) + timeOffset
                     )
@@ -192,9 +221,21 @@ class LibraryRepository(
         try {
             val authKey = authRepository.authKey ?: return
             
-            ApiClient.stremioApi.datastorePut(
-                DatastorePutRequest(authKey = authKey, changes = items)
+            Log.d(TAG, "Pushing ${items.size} items to server")
+            
+            val response = ApiClient.stremioApi.datastorePut(
+                DatastorePutRequest(
+                    authKey = authKey,
+                    collection = COLLECTION_NAME,
+                    changes = items
+                )
             )
+            
+            if (response.isSuccessful) {
+                Log.d(TAG, "Successfully pushed items to server")
+            } else {
+                Log.e(TAG, "Failed to push items: ${response.code()}")
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Push to server error", e)
         }
@@ -231,4 +272,6 @@ class LibraryRepository(
         val item = libraryItems[itemId]
         return item != null && !item.removed
     }
+    
+    fun getItemCount(): Int = libraryItems.values.count { !it.removed && !it.temp }
 }
